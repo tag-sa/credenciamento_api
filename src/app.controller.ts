@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { UsersService } from './services/users/users.service';
 import { Users } from '@prisma/client';
+import { UsersService } from './users/services/users.service';
 
 @Controller()
 export class AppController {

@@ -1,27 +1,22 @@
+version: '3.8'
+
 services:
   api:
     build:
       dockerfile: Dockerfile
       context: .
-
       target: development
     env_file:
-        - .env
+      - .env
     volumes:
       - .:/usr/src/app
-
     command: npm run start:dev
     ports:
       - 3000:3000
     depends_on:
+      - mysqldb
       - redis
-      # - postgres
-  redis:
-    image: redis
-    ports:
-      - 6379:6379
-    volumes: 
-      - redis:/data
+  
   # postgres:
   #   image: postgres
   #   restart: always
@@ -34,7 +29,25 @@ services:
   #   volumes:
   #     - docker-nest-postgres:/var/lib/postgresql/data
 
+  mysqldb:
+    image: mysql:8
+    restart: unless-stopped
+    environment:
+      - MYSQL_ROOT_PASSWORD=$MYSQLDB_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQLDB_DATABASE
+    ports:
+      - $MYSQLDB_LOCAL_PORT:$MYSQLDB_DOCKER_PORT
+    volumes:
+      - db:/var/lib/mysql
+
+  redis:
+    image: redis
+    ports:
+      - 6379:6379
+    volumes: 
+      - redis:/data
+
 volumes:
-  docker-nest-postgres:
+  db:
   redis:
     driver: local
