@@ -12,8 +12,6 @@ RUN npm ci
 
 COPY --chown=node:node . .
 
-RUN npm run prisma:generate
-
 USER node
 
 ###################

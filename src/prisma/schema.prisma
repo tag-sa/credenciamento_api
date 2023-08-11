@@ -16,6 +16,63 @@ model Users {
   @@map("users")
 
   id    Int     @default(autoincrement()) @id
+  name  String
+  nickname String?
   email String  @unique
-  name  String?
+  cpf  String  @unique @db.VarChar(11)
+  rg  String  @unique @db.VarChar(9)
+  rg_emitted_by String?
+  password String @db.Text
+  gender GenderType
+  birthdate DateTime
+  status StatusType @default(a)
+  root Boolean @default(false)
+  created DateTime @default(now())
+  modified DateTime @updatedAt
+  recovery_code String?
+  recovery_code_expires DateTime?
+  change_password Boolean @default(false)
+  last_login DateTime?
+  last_ip String?
+  last_access DateTime?
+
+  group_users GroupsUsers[]
+}
+
+model Groups {
+  @@map("groups")
+
+  id    Int     @default(autoincrement()) @id
+  name  String
+  show Boolean @default(true)
+  created DateTime @default(now())
+  modified DateTime @updatedAt
+
+  group_users GroupsUsers[]
+}
+
+model GroupsUsers {
+  @@map("groups_users")
+
+  id    Int     @default(autoincrement()) @id
+  group Groups @relation(fields: [group_id], references: [id])
+  group_id Int
+
+  user Users @relation(fields: [user_id], references: [id])
+  user_id Int
+
+  @@unique([group_id, user_id])
+}
+
+
+enum StatusType {
+  a
+  i
+  b
+}
+
+enum GenderType {
+  m
+  f
+  o
 }
