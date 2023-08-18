@@ -3,40 +3,90 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Req,
+  UseGuards,
+  UnauthorizedException,
+  UsePipes,
+  HttpCode,
+  Put,
   Param,
-  Delete,
 } from '@nestjs/common';
+
 import { UsersService } from './users.service';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UserDto } from './dto/user.dto';
+import { AuthGuard } from 'src/auth/auth.guard';
+import { JwtService } from '@nestjs/jwt';
+import { LoginUserDto } from './dto/login-user.dto';
+import bcrypt from 'bcryptjs';
+import { Request } from 'express';
+import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe';
+import { User } from './entities/user.entity';
+import { UniqueEmailPipe } from 'src/pipes/UniqueEmailPipe';
+import { UniqueCpfPipe } from 'src/pipes/UniqueCpfPipe';
 
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
 
-  @Post()
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.usersService.create(createUserDto);
-  }
-
+  @UseGuards(AuthGuard)
   @Get()
   findAll() {
     return this.usersService.findAll();
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOne(+id);
+  @Post()
+  @UsePipes(new JoiValidationPipe(UserDto.createCatSchema))
+  create(@Body(UniqueEmailPipe) UserDto: UserDto) {
+    return this.usersService.create(UserDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersService.update(+id, updateUserDto);
+  @Put(':id')
+  @UseGuards(AuthGuard)
+  update(
+    @Param('id') id: string,
+    @Body(UniqueEmailPipe, UniqueCpfPipe) userDto: UserDto,
+  ) {
+    return this.usersService.update(+id, userDto);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.usersService.remove(+id);
+  @Post('login')
+  @UsePipes(new JoiValidationPipe(LoginUserDto.validationSchema))
+  @HttpCode(200)
+  async login(@Body() signInDto: LoginUserDto, @Req() req: Request) {
+    const user = await this.usersService.findByEmail(signInDto.email);
+    console.log(signInDto);
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    if (!(await bcrypt.compare(signInDto.password, user.password))) {
+      throw new UnauthorizedException();
+    }
+
+    delete user.password;
+
+    const payload = { sub: user.id, user };
+    const token = await this.jwtService.signAsync(payload);
+
+    await this.usersService.saveUserSession(user.id, token, req.ip);
+
+    const ret = {
+      status: true,
+      data: {
+        user,
+        access_token: token,
+      },
+    };
+
+    return ret;
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('me')
+  getProfile(@Req() req: Request & { user: User }) {
+    return req.user;
   }
 }

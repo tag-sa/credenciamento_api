@@ -11,32 +11,42 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StatusType {
+  a
+  i
+  b
+}
+
+enum GenderType {
+  m
+  f
+  o
+}
+
 model Users {
   @@map("users")
 
   id    Int     @default(autoincrement()) @id
   name  String
-  nickname String?
+  nickname String
   email String  @unique
   cpf  String  @unique @db.VarChar(11)
-  rg  String  @unique @db.VarChar(9)
+  rg  String?  @unique @db.VarChar(9)
   rg_emitted_by String?
   password String @db.Text
   gender GenderType
-  birthdate DateTime
+  birthdate DateTime @db.Date
   status StatusType @default(a)
-  root Boolean @default(false)
+  root Boolean? @default(false)
   created DateTime @default(now())
-  modified DateTime @updatedAt
+  modified DateTime @updatedAt @default(now())
   recovery_code String?
   recovery_code_expires DateTime?
-  change_password Boolean @default(false)
-  last_login DateTime?
-  last_ip String?
-  last_access DateTime?
+  change_password Boolean? @default(false)
 
   group_users GroupsUsers[]
   logs Logs[]
+  users_sessions UsersSessions[]
 }
 
 model Groups {
@@ -159,14 +169,15 @@ model Logs {
   user_id Int
 }
 
-enum StatusType {
-  a
-  i
-  b
-}
+model UsersSessions {
+  @@map("users_sessions")
 
-enum GenderType {
-  m
-  f
-  o
+  id Int @default(autoincrement()) @id
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id Int
+  token String @db.Text
+  ip String
+  created DateTime @default(now())
+  expires DateTime?
+  last_access DateTime?
 }

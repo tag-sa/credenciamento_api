@@ -1,10 +1,22 @@
 export class User {
-  id: number;
+  id?: number;
   name: string;
+  nickname: string;
   email: string;
+  cpf: string;
+  rg: string;
+  rg_emitted_by: string;
   password: string;
-
-  constructor(partial: Partial<User>) {
-    Object.assign(this, partial);
-  }
+  gender: string;
+  birthdate: Date;
+  status?: string;
+  root?: boolean;
+  created?: Date;
+  modified?: Date;
+  recovery_code?: string;
+  recovery_code_expires?: Date;
+  change_password?: boolean;
+  last_login?: Date;
+  last_ip?: string;
+  last_access?: Date;
 }
