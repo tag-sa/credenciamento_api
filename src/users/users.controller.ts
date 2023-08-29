@@ -23,6 +23,7 @@ import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe';
 import { User } from './entities/user.entity';
 import { UniqueEmailPipe } from 'src/pipes/UniqueEmailPipe';
 import { UniqueCpfPipe } from 'src/pipes/UniqueCpfPipe';
+import { Address } from './entities/address.entity';
 
 @Controller('users')
 export class UsersController {
@@ -39,7 +40,7 @@ export class UsersController {
 
   @Post()
   @UsePipes(new JoiValidationPipe(UserDto.createCatSchema))
-  create(@Body(UniqueEmailPipe) UserDto: UserDto) {
+  create(@Body(UniqueEmailPipe) UserDto: UserDto & { address?: Address }) {
     return this.usersService.create(UserDto);
   }
 
@@ -56,8 +57,8 @@ export class UsersController {
   @UsePipes(new JoiValidationPipe(LoginUserDto.validationSchema))
   @HttpCode(200)
   async login(@Body() signInDto: LoginUserDto, @Req() req: Request) {
-    const user = await this.usersService.findByEmail(signInDto.email);
     console.log(signInDto);
+    const user = await this.usersService.findByEmail(signInDto.email);
     if (!user) {
       throw new UnauthorizedException();
     }

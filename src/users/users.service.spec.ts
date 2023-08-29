@@ -36,7 +36,7 @@ describe('UsersService', () => {
       name: faker.person.fullName(),
       nickname: faker.person.fullName().split(' ')[0],
       email: faker.internet.email(),
-      cpf: (Math.random() + 1).toString(36).substring(6),
+      document: generateRandomDocument(),
       rg: (Math.random() + 1).toString(36).substring(7),
       rg_emitted_by: faker.location.state(),
       password: faker.internet.password({ length: 8 }),
@@ -70,3 +70,48 @@ describe('UsersService', () => {
     expect(find).toHaveProperty('id');
   });
 });
+
+function generateRandomDocument() {
+  if (Math.random() < 0.5) {
+    return generateCPF();
+  } else {
+    return generateCNPJ();
+  }
+}
+
+function generateCPF() {
+  const randomDigits = () => Math.floor(Math.random() * 10);
+
+  const cpfArray = new Array(9).fill(null).map(randomDigits);
+
+  const firstVerifier =
+    cpfArray.reduce((acc, digit, index) => acc + digit * (10 - index), 0) % 11;
+  cpfArray.push(firstVerifier < 2 ? 0 : 11 - firstVerifier);
+
+  const secondVerifier =
+    cpfArray.reduce((acc, digit, index) => acc + digit * (11 - index), 0) % 11;
+  cpfArray.push(secondVerifier < 2 ? 0 : 11 - secondVerifier);
+
+  return cpfArray.join('');
+}
+
+function generateCNPJ() {
+  const randomDigits = () => Math.floor(Math.random() * 10);
+
+  const cnpjArray = new Array(12).fill(null).map(randomDigits);
+
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 5));
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 6));
+
+  return cnpjArray.join('');
+}
+
+function calculateCNPJVerifier(array, multiplier) {
+  let sum = 0;
+  for (let i = 0; i < array.length; i++) {
+    sum += array[i] * multiplier;
+    multiplier = multiplier === 2 ? 9 : multiplier - 1;
+  }
+  const remainder = sum % 11;
+  return remainder < 2 ? 0 : 11 - remainder;
+}

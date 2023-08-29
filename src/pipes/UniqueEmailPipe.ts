@@ -42,8 +42,6 @@ export class UniqueEmailPipe implements PipeTransform {
       where: where,
     });
 
-    // console.log(where, checkDatabaseEmail);
-
     if (checkDatabaseEmail) {
       throw new BadRequestException({
         message: 'Validation failed',

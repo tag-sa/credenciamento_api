@@ -11,7 +11,7 @@ import { UserDto } from './dto/user.dto';
 export class UsersService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async create(createUserDto: UserDto) {
+  async create(createUserDto: UserDto & { address?: any }) {
     const passwordHash = await bcrypt.hash(
       createUserDto.password,
       jwtConstants.saltOrRounds,
@@ -25,8 +25,12 @@ export class UsersService {
           : createUserDto.name.split(' ')[0],
         email: createUserDto.email.toLowerCase(),
         password: passwordHash,
-        birthdate: createUserDto.birthdate,
-        cpf: createUserDto.cpf,
+        birthdate: moment(createUserDto.birthdate).toDate(),
+        cpf:
+          createUserDto.document.length === 11 ? createUserDto.document : null,
+        cnpj:
+          createUserDto.document.length === 14 ? createUserDto.document : null,
+        type: createUserDto.document.length === 11 ? 'pf' : 'pj',
         gender: createUserDto.gender,
         rg: createUserDto?.rg,
         rg_emitted_by: createUserDto?.rg_emitted_by,
@@ -34,6 +38,23 @@ export class UsersService {
         status: 'a',
       },
     });
+
+    if (createUserDto.address) {
+      await this.prismaService.address.create({
+        data: {
+          entity: 'users',
+          entity_id: save.id,
+          zip: createUserDto.address.zip,
+          address: createUserDto.address.address,
+          neighborhood: createUserDto.address.neighborhood,
+          city: createUserDto.address.city,
+          state: createUserDto.address.state,
+          number: createUserDto.address.number,
+          complement: createUserDto.address.complement,
+          type: createUserDto.address.type,
+        },
+      });
+    }
 
     return save;
   }
@@ -53,7 +74,7 @@ export class UsersService {
         : updateUserDto?.name?.split(' ')[0],
       email: updateUserDto?.email?.toLowerCase(),
       birthdate: updateUserDto?.birthdate,
-      cpf: updateUserDto?.cpf,
+      cpf: updateUserDto?.document,
       gender: updateUserDto?.gender,
       rg: updateUserDto?.rg,
       rg_emitted_by: updateUserDto?.rg_emitted_by,
