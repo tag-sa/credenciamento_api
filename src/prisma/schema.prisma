@@ -43,11 +43,16 @@ model Users {
   recovery_code         String?
   recovery_code_expires DateTime?
   change_password       Boolean?    @default(false)
+  score                 Int         @default(0)
 
-  group_users    GroupsUsers[]
-  logs           Logs[]
-  users_sessions UsersSessions[]
-  addresses      Address[]
+  group_users     GroupsUsers[]
+  logs            Logs[]
+  users_sessions  UsersSessions[]
+  addresses       Address[]
+  teams_users     TeamsUsers[]
+  UsersCourses    UsersCourses[]
+  UsersAdvertises UsersAdvertises[]
+  UsersFunctions  UsersFunctions[]
 
   @@map("users")
 }
@@ -129,6 +134,8 @@ model Images {
   created            DateTime @default(now())
   modified           DateTime @updatedAt
 
+  events Events @relation(fields: [entity_id], references: [id], onDelete: Cascade)
+
   @@map("images")
 }
 
@@ -203,4 +210,209 @@ model Address {
   user Users @relation(fields: [entity_id], references: [id], onDelete: Cascade)
 
   @@map("addresses")
+}
+
+model Advertisers {
+  id    Int    @id @default(autoincrement())
+  name  String
+  url   String
+  city  String
+  state String
+  about String @db.Text
+
+  places          Places[]
+  UsersAdvertises UsersAdvertises[]
+  Events          Events[]
+
+  @@map("advertisers")
+}
+
+model UsersAdvertises {
+  id            Int      @id @default(autoincrement())
+  user_id       Int
+  advertiser_id Int
+  created       DateTime @default(now())
+  modified      DateTime @default(now()) @updatedAt
+
+  user       Users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  advertiser Advertisers @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
+
+  @@map("users_advertises")
+}
+
+model Places {
+  id            Int      @id @default(autoincrement())
+  advertiser_id Int?
+  name          String
+  description   String?
+  address       String?
+  city          String?
+  state         String?
+  country       String?
+  zip           String?
+  created       DateTime @default(now())
+  modified      DateTime @default(now()) @updatedAt
+
+  advertiser Advertisers? @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
+
+  events Events[]
+
+  @@map("places")
+}
+
+model Events {
+  id            Int        @id @default(autoincrement())
+  advertiser_id Int
+  name          String
+  date_start    DateTime
+  date_end      DateTime?
+  status        StatusType @default(a)
+  place_id      Int
+  created       DateTime   @default(now())
+  modified      DateTime   @default(now()) @updatedAt
+
+  place      Places      @relation(fields: [place_id], references: [id], onDelete: Cascade)
+  advertiser Advertisers @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
+  images     Images[]
+  teams      Teams[]
+
+  @@map("events")
+}
+
+model Sectors {
+  id       Int        @id @default(autoincrement())
+  name     String
+  status   StatusType @default(a)
+  created  DateTime   @default(now())
+  modified DateTime   @default(now()) @updatedAt
+
+  teams Teams[]
+
+  @@map("sectors")
+}
+
+model TeamsStatus {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  teams Teams[]
+
+  @@map("teams_status")
+}
+
+enum TaxTypes {
+  period
+  hour
+}
+
+model Functions {
+  id       Int       @id @default(autoincrement())
+  name     String
+  created  DateTime  @default(now())
+  modified DateTime  @default(now()) @updatedAt
+  tax      Float?
+  tax_type TaxTypes?
+
+  teams_users      TeamsUsers[]
+  FunctionsCourses FunctionsCourses[]
+  UsersFunctions   UsersFunctions[]
+
+  @@map("functions")
+}
+
+model Courses {
+  id       Int      @id @default(autoincrement())
+  name     String
+  created  DateTime @default(now())
+  modified DateTime @default(now()) @updatedAt
+
+  functions    FunctionsCourses[]
+  UsersCourses UsersCourses[]
+
+  @@map("courses")
+}
+
+model FunctionsCourses {
+  id          Int @id @default(autoincrement())
+  function_id Int
+  course_id   Int
+
+  function Functions @relation(fields: [function_id], references: [id], onDelete: Cascade)
+  course   Courses   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([function_id, course_id])
+  @@map("functions_courses")
+}
+
+model UsersCourses {
+  int         Int      @id @default(autoincrement())
+  user_id     Int
+  course_id   Int
+  valid_until DateTime
+  certified   Boolean  @default(false)
+
+  user   Users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course Courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@map("users_courses")
+}
+
+model Teams {
+  id             Int        @id @default(autoincrement())
+  event_id       Int
+  sector_id      Int?
+  team_status_id Int
+  name           String
+  status         StatusType @default(a)
+  extra_amount   Float?
+  quantity       Int
+  date_start     DateTime
+  date_end       DateTime?
+  created        DateTime   @default(now())
+  modified       DateTime   @default(now()) @updatedAt
+
+  teamStatus TeamsStatus  @relation(fields: [team_status_id], references: [id], onDelete: Restrict)
+  sector     Sectors?     @relation(fields: [sector_id], references: [id], onDelete: Restrict)
+  teamsUsers TeamsUsers[]
+  event      Events       @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  @@map("teams")
+}
+
+model TeamsUsers {
+  id             Int       @id @default(autoincrement())
+  teams_id       Int
+  user_id        Int?
+  function_id    Int
+  date_start     DateTime
+  date_end       DateTime?
+  confirmed      Boolean   @default(false)
+  justification  String?
+  identification String?
+  created        DateTime  @default(now())
+  modified       DateTime  @default(now()) @updatedAt
+  minutes_worked Int?
+  worked_amount  Float?
+  extra_amount   Float?
+  total_amount   Float?
+
+  user     Users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  team     Teams     @relation(fields: [teams_id], references: [id], onDelete: Cascade)
+  function Functions @relation(fields: [function_id], references: [id], onDelete: Cascade)
+
+  @@unique([teams_id, user_id])
+  @@map("teams_users")
+}
+
+model UsersFunctions {
+  id          Int       @id @default(autoincrement())
+  user_id     Int
+  function_id Int
+  default     Boolean?  @default(false)
+  user        Users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  function    Functions @relation(fields: [function_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, function_id])
+  @@unique([user_id, function_id, default])
+  @@map("users_functions")
 }
