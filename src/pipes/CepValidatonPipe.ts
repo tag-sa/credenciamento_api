@@ -16,13 +16,6 @@ export class ZipPipe implements PipeTransform {
   ) {}
 
   async transform(zip: any) {
-    if (!zip) {
-      throw new BadRequestException({
-        message: 'Validation failed',
-        errors: ['Zip code is mandatory'],
-      });
-    }
-
     const unmaskedZip = zip.replaceAll('-', '').trim();
 
     if (unmaskedZip.length !== 8) {

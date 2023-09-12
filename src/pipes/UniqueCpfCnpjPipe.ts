@@ -11,27 +11,37 @@ import { REQUEST } from '@nestjs/core';
 import { User } from 'src/users/entities/user.entity';
 
 @Injectable({ scope: Scope.REQUEST })
-export class UniqueCpfPipe implements PipeTransform {
+export class UniqueCpfCnpjPipe implements PipeTransform {
   constructor(
     @Inject(REQUEST) protected readonly request: Request & { user: User },
   ) {}
 
   async transform(data: any) {
-    const { cpf }: { cpf: string } = data;
+    const { document }: { document: string } = data;
 
-    if (!cpf) return data;
+    if (!document) return data;
 
     const prismaservice = new PrismaService();
-    const unmaskedCpf = cpf.replaceAll('.', '').replaceAll('-', '').trim();
+    const unmaskedCpfCnpj = document
+      .replaceAll('.', '')
+      .replaceAll('-', '')
+      .trim();
 
     let where: any = {
-      cpf: unmaskedCpf,
+      cpf: unmaskedCpfCnpj,
     };
 
     if (this.request.method === 'PUT') {
       where = {
-        cpf: unmaskedCpf,
         AND: {
+          OR: [
+            {
+              cpf: unmaskedCpfCnpj,
+            },
+            {
+              cnpj: unmaskedCpfCnpj,
+            },
+          ],
           NOT: {
             id: +this.request.params.id,
           },
@@ -39,14 +49,14 @@ export class UniqueCpfPipe implements PipeTransform {
       };
     }
 
-    const checkDatabaseCpf = await prismaservice.users.findUnique({
+    const checkDatabaseCpf = await prismaservice.users.findMany({
       where: where,
     });
 
     if (checkDatabaseCpf) {
       throw new BadRequestException({
         message: 'Validation failed',
-        errors: ['Cpf already exists'],
+        errors: ['Document already exists'],
       });
     }
 

@@ -213,12 +213,10 @@ model Address {
 }
 
 model Advertisers {
-  id    Int    @id @default(autoincrement())
+  id    Int     @id @default(autoincrement())
   name  String
-  url   String
-  city  String
-  state String
-  about String @db.Text
+  url   String?
+  about String? @db.Text
 
   places          Places[]
   UsersAdvertises UsersAdvertises[]

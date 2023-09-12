@@ -22,8 +22,9 @@ import { Request } from 'express';
 import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe';
 import { User } from './entities/user.entity';
 import { UniqueEmailPipe } from 'src/pipes/UniqueEmailPipe';
-import { UniqueCpfPipe } from 'src/pipes/UniqueCpfPipe';
+
 import { Address } from './entities/address.entity';
+import { UniqueCpfCnpjPipe } from 'src/pipes/UniqueCpfCnpjPipe';
 
 @Controller('users')
 export class UsersController {
@@ -48,7 +49,8 @@ export class UsersController {
   @UseGuards(AuthGuard)
   update(
     @Param('id') id: string,
-    @Body(UniqueEmailPipe, UniqueCpfPipe) userDto: UserDto,
+    @Body(UniqueEmailPipe, UniqueCpfCnpjPipe)
+    userDto: UserDto,
   ) {
     return this.usersService.update(+id, userDto);
   }
@@ -57,7 +59,6 @@ export class UsersController {
   @UsePipes(new JoiValidationPipe(LoginUserDto.validationSchema))
   @HttpCode(200)
   async login(@Body() signInDto: LoginUserDto, @Req() req: Request) {
-    console.log(signInDto);
     const user = await this.usersService.findByEmail(signInDto.email);
     if (!user) {
       throw new UnauthorizedException();

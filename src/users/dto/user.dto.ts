@@ -6,7 +6,7 @@ import { Address } from '../entities/address.entity';
 export class UserDto implements User {
   static createCatSchema = Joi.object({
     name: Joi.string().required(),
-    nickname: Joi.string(),
+    nickname: Joi.string().allow(''),
     email: Joi.string().email().required(),
     document: Joi.string().required().min(11).max(14),
     password: Joi.string().required(),

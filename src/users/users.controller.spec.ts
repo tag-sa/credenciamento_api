@@ -86,6 +86,58 @@ describe('UsersController', () => {
     expect(data.status).toBe(HttpStatus.BAD_REQUEST);
   });
 
+  it('should create and update a user without nickname', async () => {
+    const nicknameLessUser: UserDto = {
+      name: faker.person.fullName(),
+      nickname: '',
+      email: faker.internet.email(),
+      document: generateRandomDocument(),
+      rg: (Math.random() + 1).toString(36).substring(7),
+      rg_emitted_by: faker.location.state(),
+      password: 'qwert123',
+      gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
+      birthdate: faker.date.past(),
+    };
+
+    const data = await request(app.getHttpServer())
+      .post('/users')
+      .send({
+        ...nicknameLessUser,
+        address: {
+          zip: '12345678',
+          address: 'Rua Teste',
+          neighborhood: 'Bairro Teste',
+          city: 'Cidade Teste',
+          state: 'Estado Teste',
+          number: '123',
+          complement: 'Complemento Teste',
+          type: 'res',
+        },
+      })
+      .set('Content-Type', 'application/json');
+
+    nicknameLessUser.id = data.body.id;
+
+    const loginData = await request(app.getHttpServer())
+      .post('/users/login')
+      .send({
+        email: nicknameLessUser.email,
+        password: nicknameLessUser.password,
+      })
+      .set('Content-Type', 'application/json');
+
+    const bearerToken = loginData.body.data.access_token;
+
+    const update = await request(app.getHttpServer())
+      .put(`/users/${nicknameLessUser.id}`)
+      .send({
+        nickname: faker.person.fullName().split(' ')[0],
+      })
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    expect(data.status).toBe(HttpStatus.CREATED);
+    expect(update.status).toBe(HttpStatus.OK);
+  });
   it('should create a user', async () => {
     const data = await request(app.getHttpServer())
       .post('/users')
@@ -172,14 +224,20 @@ describe('UsersController', () => {
       .get('/users')
       .set('Authorization', `Bearer ${bearerToken}`);
 
-    const cpfDuplicated = usersList.body.find(
-      (user: User) => user.cpf !== createUser.document,
-    );
+    const randomUser = usersList.body.find((user: User) => {
+      if (user.cpf) {
+        return user.cpf !== createUser.document;
+      }
+
+      if (user.cnpj) {
+        return user.cnpj !== createUser.document;
+      }
+    });
 
     const data = await request(app.getHttpServer())
       .put(`/users/${createUser.id}`)
       .send({
-        cpf: cpfDuplicated.cpf,
+        document: randomUser.cpf ? randomUser.cpf : randomUser.cnpj,
       })
       .set('Authorization', `Bearer ${bearerToken}`)
       .set('Content-Type', 'application/json');
@@ -192,6 +250,7 @@ describe('UsersController', () => {
       .put(`/users/${createUser.id}`)
       .send({
         name: 'Teste',
+        password: '12345687979',
         cpf: (Math.random() + 1).toString(36).substring(6),
         email: faker.internet.email(),
       })
@@ -200,6 +259,10 @@ describe('UsersController', () => {
 
     expect(data.status).toBe(HttpStatus.OK);
     expect(data.body.name).toBe('Teste');
+  });
+
+  afterAll(async () => {
+    await app.close();
   });
 });
 
