@@ -27,14 +27,14 @@ export class AdvertisersController {
   @UseGuards(AuthGuard)
   @Post()
   @UsePipes(new JoiValidationPipe(CreateAdvertiserDto.createCatSchema))
-  create(@Body() createAdvertiserDto: CreateAdvertiserDto) {
-    return this.advertisersService.create(createAdvertiserDto);
+  async create(@Body() createAdvertiserDto: CreateAdvertiserDto) {
+    return { data: await this.advertisersService.create(createAdvertiserDto) };
   }
 
   @UseGuards(AuthGuard)
   @Get()
-  findAll() {
-    return this.advertisersService.findAll();
+  async findAll() {
+    return { data: await this.advertisersService.findAll() };
   }
 
   @UseGuards(AuthGuard)
@@ -53,7 +53,7 @@ export class AdvertisersController {
       throw new NotFoundException('Advertiser not found');
     }
 
-    return this.advertisersService.findOne(+id);
+    return { data: await this.advertisersService.findOne(+id) };
   }
 
   @Put(':id')
@@ -88,7 +88,9 @@ export class AdvertisersController {
       throw new NotFoundException('Advertiser not found');
     }
 
-    return this.advertisersService.update(+id, updateAdvertiserDto);
+    return {
+      data: await this.advertisersService.update(+id, updateAdvertiserDto),
+    };
   }
 
   @UseGuards(AuthGuard)

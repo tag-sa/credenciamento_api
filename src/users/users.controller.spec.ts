@@ -116,7 +116,7 @@ describe('UsersController', () => {
       })
       .set('Content-Type', 'application/json');
 
-    nicknameLessUser.id = data.body.id;
+    nicknameLessUser.id = data.body.data.id;
 
     const loginData = await request(app.getHttpServer())
       .post('/users/login')
@@ -156,7 +156,7 @@ describe('UsersController', () => {
       })
       .set('Content-Type', 'application/json');
 
-    createUser.id = data.body.id;
+    createUser.id = data.body.data.id;
 
     expect(data.status).toBe(HttpStatus.CREATED);
   });
@@ -187,7 +187,7 @@ describe('UsersController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.length).toBeGreaterThan(0);
+    expect(data.body.data.length).toBeGreaterThan(0);
   });
 
   it('should get `me` data', async () => {
@@ -196,7 +196,7 @@ describe('UsersController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.id).toBe(createUser.id);
+    expect(data.body.data.id).toBe(createUser.id);
   });
 
   it('should return email duplicated from updated user', async () => {
@@ -204,7 +204,7 @@ describe('UsersController', () => {
       .get('/users')
       .set('Authorization', `Bearer ${bearerToken}`);
 
-    const emailDuplicated = usersList.body.find(
+    const emailDuplicated = usersList.body.data.find(
       (user: User) => user.email !== createUser.email,
     );
 
@@ -220,11 +220,11 @@ describe('UsersController', () => {
   });
 
   it('should return cpf duplicated from updated user', async () => {
-    const usersList = await request(app.getHttpServer())
+    const usersList: any = await request(app.getHttpServer())
       .get('/users')
       .set('Authorization', `Bearer ${bearerToken}`);
 
-    const randomUser = usersList.body.find((user: User) => {
+    const randomUser = usersList.body.data.find((user: User) => {
       if (user.cpf) {
         return user.cpf !== createUser.document;
       }
@@ -258,7 +258,7 @@ describe('UsersController', () => {
       .set('Content-Type', 'application/json');
 
     expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.name).toBe('Teste');
+    expect(data.body.data.name).toBe('Teste');
   });
 
   afterAll(async () => {

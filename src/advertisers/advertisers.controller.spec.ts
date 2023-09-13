@@ -63,7 +63,7 @@ describe('AdvertisersController', () => {
       })
       .set('Authorization', `Bearer ${bearerToken}`);
 
-    advertiserId = data.body.id;
+    advertiserId = data.body.data.id;
 
     expect(data.status).toBe(HttpStatus.CREATED);
   });
@@ -117,7 +117,7 @@ describe('AdvertisersController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.length).toBeGreaterThan(0);
+    expect(data.body.data.length).toBeGreaterThan(0);
   });
 
   it('should return a advertiser', async () => {
@@ -126,7 +126,7 @@ describe('AdvertisersController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.id).toBe(advertiserId);
+    expect(data.body.data.id).toBe(advertiserId);
   });
 
   it('should return not found from get inexistent advertiser', async () => {

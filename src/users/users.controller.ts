@@ -35,24 +35,30 @@ export class UsersController {
 
   @UseGuards(AuthGuard)
   @Get()
-  findAll() {
-    return this.usersService.findAll();
+  async findAll() {
+    const users = await this.usersService.findAll();
+
+    return { data: users };
   }
 
   @Post()
   @UsePipes(new JoiValidationPipe(UserDto.createCatSchema))
-  create(@Body(UniqueEmailPipe) UserDto: UserDto & { address?: Address }) {
-    return this.usersService.create(UserDto);
+  async create(
+    @Body(UniqueEmailPipe) UserDto: UserDto & { address?: Address },
+  ) {
+    return {
+      data: await this.usersService.create(UserDto),
+    };
   }
 
   @Put(':id')
   @UseGuards(AuthGuard)
-  update(
+  async update(
     @Param('id') id: string,
     @Body(UniqueEmailPipe, UniqueCpfCnpjPipe)
     userDto: UserDto,
   ) {
-    return this.usersService.update(+id, userDto);
+    return { data: await this.usersService.update(+id, userDto) };
   }
 
   @Post('login')
@@ -76,7 +82,6 @@ export class UsersController {
     await this.usersService.saveUserSession(user.id, token, req.ip);
 
     const ret = {
-      status: true,
       data: {
         user,
         access_token: token,
@@ -89,6 +94,6 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('me')
   getProfile(@Req() req: Request & { user: User }) {
-    return req.user;
+    return { data: req.user };
   }
 }

@@ -30,8 +30,8 @@ describe('CepController', () => {
     const data = await request(app.getHttpServer()).get('/zip/01001000');
 
     expect(data.status).toBe(200);
-    expect(data.body).toHaveProperty('status');
-    expect(data.body.status).toBe(true);
+
+    expect(data.body.data.address).toBeDefined();
   });
 
   it('should return a not found', async () => {

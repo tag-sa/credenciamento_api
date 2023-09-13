@@ -20,7 +20,6 @@ export class ZipController {
     }
 
     return {
-      status: true,
       data: new Zip(
         zip,
         getData.data.Endereco.nome,

@@ -8,7 +8,7 @@ export class CreateAdvertiserDto implements Advertiser {
 
   static createCatSchema = Joi.object({
     name: Joi.string().required(),
-    url: Joi.string(),
-    about: Joi.string(),
+    url: Joi.string().allow(''),
+    about: Joi.string().allow(''),
   });
 }
