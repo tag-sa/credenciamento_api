@@ -17,7 +17,7 @@ export class ZipPipe implements PipeTransform {
 
   async transform(zip: any) {
     const unmaskedZip = zip.replaceAll('-', '').trim();
-
+    console.log(6666666);
     if (unmaskedZip.length !== 8) {
       throw new BadRequestException({
         message: 'Validation failed',

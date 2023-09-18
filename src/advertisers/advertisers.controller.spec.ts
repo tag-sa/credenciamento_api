@@ -12,6 +12,7 @@ describe('AdvertisersController', () => {
   let app: INestApplication;
   let bearerToken = null;
   let advertiserId = null;
+  let placeId = null;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -127,6 +128,8 @@ describe('AdvertisersController', () => {
 
     expect(data.status).toBe(HttpStatus.OK);
     expect(data.body.data.id).toBe(advertiserId);
+    expect(data.body.data.events).toBeDefined();
+    expect(typeof data.body.data.events).toBe('object');
   });
 
   it('should return not found from get inexistent advertiser', async () => {
@@ -159,6 +162,44 @@ describe('AdvertisersController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.NOT_FOUND);
+  });
+
+  it('should insert an advertiser place', async () => {
+    const data = await request(app.getHttpServer())
+      .post(`/advertisers/${advertiserId}/places`)
+      .send({
+        name: faker.company.name(),
+        address: faker.location.streetAddress(),
+        city: faker.location.city(),
+        state: faker.location.state(),
+        zip: faker.location.zipCode(),
+        neighborhood: faker.location.county(),
+        number: faker.datatype.number().toString(),
+      })
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    placeId = data.body.data.id;
+
+    expect(data.status).toBe(HttpStatus.CREATED);
+  });
+
+  it('should return a list of advertiser places', async () => {
+    const data = await request(app.getHttpServer())
+      .get(`/advertisers/${advertiserId}/places`)
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    expect(data.status).toBe(HttpStatus.OK);
+    expect(data.body.data).toBeDefined();
+    expect(typeof data.body.data).toBe('object');
+    expect(data.body.data.length).toBeGreaterThan(0);
+  });
+
+  it('should delete a advertiser place', async () => {
+    const data = await request(app.getHttpServer())
+      .delete(`/advertisers/${advertiserId}/places/${placeId}`)
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    expect(data.status).toBe(HttpStatus.OK);
   });
 
   it('should delete a advertiser', async () => {

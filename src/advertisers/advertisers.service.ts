@@ -3,6 +3,7 @@ import { CreateAdvertiserDto } from './dto/create-advertiser.dto';
 import { REQUEST } from '@nestjs/core';
 import { Request } from 'express';
 import { PrismaService } from 'src/prisma.service';
+import moment from 'moment';
 
 @Injectable({ scope: Scope.REQUEST })
 export class AdvertisersService {
@@ -58,11 +59,50 @@ export class AdvertisersService {
   }
 
   async findOne(id: number) {
-    return await this.prismaService.advertisers.findFirst({
+    const advertiser: any = await this.prismaService.advertisers.findFirst({
       where: {
         id: id,
       },
     });
+
+    advertiser.events = [];
+
+    const pastEvents = await this.prismaService.events.findMany({
+      where: {
+        advertiser_id: advertiser.id,
+        date_end: {
+          lt: moment().toDate(),
+        },
+      },
+      include: {
+        teams: {
+          include: {
+            teamsUsers: true,
+          },
+        },
+      },
+    });
+
+    const events = await this.prismaService.events.findMany({
+      where: {
+        advertiser_id: advertiser.id,
+        date_end: {
+          gte: moment().toDate(),
+        },
+      },
+      include: {
+        teams: {
+          include: {
+            teamsUsers: true,
+          },
+        },
+      },
+    });
+
+    advertiser.events = events;
+    advertiser.pastEvents = pastEvents;
+
+    return advertiser;
   }
 
   update(id: number, updateAdvertiserDto: CreateAdvertiserDto) {
