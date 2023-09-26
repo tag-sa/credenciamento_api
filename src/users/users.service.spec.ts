@@ -1,16 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { UsersService } from './users.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
 import { faker } from '@faker-js/faker';
+import { Test, TestingModule } from '@nestjs/testing';
 import { GenderType } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
 import { UserDto } from './dto/user.dto';
+import { UsersService } from './users.service';
 
 describe('UsersService', () => {
   let userService: UsersService;
   let prismaService: PrismaService;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const module: TestingModule = await Test.createTestingModule({
       providers: [UsersService, PrismaService],
       imports: [PrismaModule],

@@ -1,7 +1,6 @@
 import Joi from 'joi';
-import { Advertiser } from '../entities/advertiser.entity';
 
-export class CreateAdvertiserDto implements Advertiser {
+export class CreateAdvertiserDto {
   name: string;
   url: string;
   about: string;

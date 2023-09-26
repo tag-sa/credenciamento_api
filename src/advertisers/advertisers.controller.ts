@@ -28,14 +28,18 @@ export class AdvertisersController {
   @UseGuards(AuthGuard)
   @Post()
   @UsePipes(new JoiValidationPipe(CreateAdvertiserDto.createCatSchema))
-  async create(@Body() createAdvertiserDto: CreateAdvertiserDto) {
-    return { data: await this.advertisersService.create(createAdvertiserDto) };
+  async create(@Req() req, @Body() createAdvertiserDto: CreateAdvertiserDto) {
+    const userId = req['user'].id;
+    return {
+      data: await this.advertisersService.create(createAdvertiserDto, userId),
+    };
   }
 
   @UseGuards(AuthGuard)
   @Get()
-  async findAll() {
-    return { data: await this.advertisersService.findAll() };
+  async findAll(@Req() req) {
+    const userId = req['user'].id;
+    return { data: await this.advertisersService.findAll(userId) };
   }
 
   @UseGuards(AuthGuard)
@@ -187,7 +191,6 @@ export class AdvertisersController {
   @Delete('/:advertiserId/places/:id')
   async removePlace(@Req() req, @Param('id') id: string) {
     const userId = req['user'].id;
-    console.log(id);
 
     const checkPlace = await this.prismaService.places.findFirst({
       where: {

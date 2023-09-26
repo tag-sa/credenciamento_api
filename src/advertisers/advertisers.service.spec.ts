@@ -1,15 +1,17 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AdvertisersService } from './advertisers.service';
+import { EventsService } from 'src/events/events.service';
 import { PrismaService } from 'src/prisma.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
+import { AdvertisersService } from './advertisers.service';
 
 describe('AdvertisersService', () => {
   let service: AdvertisersService;
   let prismaService: PrismaService;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const module: TestingModule = await Test.createTestingModule({
-      providers: [AdvertisersService, PrismaService],
+      providers: [AdvertisersService, PrismaService, EventsService],
       imports: [PrismaModule],
     }).compile();
 

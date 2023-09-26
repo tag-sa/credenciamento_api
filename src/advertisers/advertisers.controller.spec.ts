@@ -1,11 +1,12 @@
+import { faker } from '@faker-js/faker';
+import { HttpStatus, INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { AuthModule } from 'src/auth/auth.module';
+import { EventsService } from 'src/events/events.service';
+import { PrismaModule } from 'src/prisma/prisma.module';
+import request from 'supertest';
 import { AdvertisersController } from './advertisers.controller';
 import { AdvertisersService } from './advertisers.service';
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import request from 'supertest';
-import { AuthModule } from 'src/auth/auth.module';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { faker } from '@faker-js/faker';
 
 describe('AdvertisersController', () => {
   let controller: AdvertisersController;
@@ -15,9 +16,10 @@ describe('AdvertisersController', () => {
   let placeId = null;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AdvertisersController],
-      providers: [AdvertisersService],
+      providers: [AdvertisersService, EventsService],
       imports: [PrismaModule, AuthModule],
     }).compile();
 
@@ -130,6 +132,8 @@ describe('AdvertisersController', () => {
     expect(data.body.data.id).toBe(advertiserId);
     expect(data.body.data.events).toBeDefined();
     expect(typeof data.body.data.events).toBe('object');
+    expect(data.body.data.pastEvents).toBeDefined();
+    expect(typeof data.body.data.pastEvents).toBe('object');
   });
 
   it('should return not found from get inexistent advertiser', async () => {
@@ -174,7 +178,7 @@ describe('AdvertisersController', () => {
         state: faker.location.state(),
         zip: faker.location.zipCode(),
         neighborhood: faker.location.county(),
-        number: faker.datatype.number().toString(),
+        number: faker.number.int().toString(),
       })
       .set('Authorization', `Bearer ${bearerToken}`);
 

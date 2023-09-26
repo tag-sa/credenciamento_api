@@ -1,8 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ZipController } from './zip.controller';
 import { HttpModule } from '@nestjs/axios';
 import { INestApplication } from '@nestjs/common';
+import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
+import { ZipController } from './zip.controller';
 
 describe('CepController', () => {
   let controller: ZipController;
@@ -10,6 +10,7 @@ describe('CepController', () => {
   let app: INestApplication;
 
   beforeEach(async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ZipController],
       providers: [],

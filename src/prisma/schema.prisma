@@ -23,6 +23,12 @@ enum GenderType {
   o
 }
 
+enum TeamsUsersStatusType {
+  a
+  c
+  d
+}
+
 model Users {
   id                    Int         @id @default(autoincrement())
   name                  String
@@ -379,26 +385,37 @@ model Teams {
   @@map("teams")
 }
 
-model TeamsUsers {
-  id             Int       @id @default(autoincrement())
-  teams_id       Int
-  user_id        Int?
-  function_id    Int
-  date_start     DateTime
-  date_end       DateTime?
-  confirmed      Boolean   @default(false)
-  justification  String?
-  identification String?
-  created        DateTime  @default(now())
-  modified       DateTime  @default(now()) @updatedAt
-  minutes_worked Int?
-  worked_amount  Float?
-  extra_amount   Float?
-  total_amount   Float?
+model TeamsUsersStatus {
+  id   Int    @id @default(autoincrement())
+  name String
 
-  user     Users?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  team     Teams     @relation(fields: [teams_id], references: [id], onDelete: Cascade)
-  function Functions @relation(fields: [function_id], references: [id], onDelete: Cascade)
+  teamsUsers TeamsUsers[]
+
+  @@map("teams_users_status")
+}
+
+model TeamsUsers {
+  id                    Int                  @id @default(autoincrement())
+  teams_id              Int
+  user_id               Int?
+  function_id           Int
+  date_start            DateTime
+  date_end              DateTime?
+  confirmed             TeamsUsersStatusType @default(a)
+  justification         String?
+  identification        String?
+  created               DateTime             @default(now())
+  modified              DateTime             @default(now()) @updatedAt
+  minutes_worked        Int?
+  worked_amount         Float?
+  extra_amount          Float?
+  total_amount          Float?
+  teams_users_status_id Int
+
+  user             Users?            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  team             Teams             @relation(fields: [teams_id], references: [id], onDelete: Cascade)
+  function         Functions         @relation(fields: [function_id], references: [id], onDelete: Cascade)
+  TeamsUsersStatus TeamsUsersStatus? @relation(fields: [teams_users_status_id], references: [id], onDelete: Restrict)
 
   @@unique([teams_id, user_id])
   @@map("teams_users")

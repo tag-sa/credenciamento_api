@@ -4,9 +4,18 @@ import { AuthModule } from './auth/auth.module';
 
 import { AdvertisersModule } from './advertisers/advertisers.module';
 import { ZipModule } from './zip/zip.module';
+import { EventsModule } from './events/events.module';
+import { FunctionsModule } from './functions/functions.module';
 
 @Module({
-  imports: [UsersModule, ZipModule, AuthModule, AdvertisersModule],
+  imports: [
+    UsersModule,
+    ZipModule,
+    AuthModule,
+    AdvertisersModule,
+    EventsModule,
+    FunctionsModule,
+  ],
   controllers: [],
   providers: [],
 })

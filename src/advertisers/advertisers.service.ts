@@ -1,20 +1,17 @@
-import { Inject, Injectable, Scope } from '@nestjs/common';
-import { CreateAdvertiserDto } from './dto/create-advertiser.dto';
-import { REQUEST } from '@nestjs/core';
-import { Request } from 'express';
-import { PrismaService } from 'src/prisma.service';
+import { Injectable } from '@nestjs/common';
 import moment from 'moment';
+import { EventsService } from 'src/events/events.service';
+import { PrismaService } from 'src/prisma.service';
+import { CreateAdvertiserDto } from './dto/create-advertiser.dto';
 
-@Injectable({ scope: Scope.REQUEST })
+@Injectable()
 export class AdvertisersService {
   constructor(
     private readonly prismaService: PrismaService,
-    @Inject(REQUEST) private readonly request: Request,
+    private readonly eventService: EventsService,
   ) {}
 
-  create(createAdvertiserDto: CreateAdvertiserDto) {
-    const userId = this.request['user'].id;
-
+  create(createAdvertiserDto: CreateAdvertiserDto, userId: number) {
     const save = this.prismaService.advertisers.create({
       data: {
         name: createAdvertiserDto.name,
@@ -31,8 +28,7 @@ export class AdvertisersService {
     return save;
   }
 
-  async findAll() {
-    const userId = this.request['user'].id;
+  async findAll(userId: number) {
     const advertisers = [];
 
     const getUserAdvertisers =
@@ -65,8 +61,6 @@ export class AdvertisersService {
       },
     });
 
-    advertiser.events = [];
-
     const pastEvents = await this.prismaService.events.findMany({
       where: {
         advertiser_id: advertiser.id,
@@ -77,7 +71,11 @@ export class AdvertisersService {
       include: {
         teams: {
           include: {
-            teamsUsers: true,
+            teamsUsers: {
+              include: {
+                function: true,
+              },
+            },
           },
         },
       },
@@ -87,17 +85,35 @@ export class AdvertisersService {
       where: {
         advertiser_id: advertiser.id,
         date_end: {
-          gte: moment().toDate(),
+          gt: moment().toDate(),
         },
       },
       include: {
         teams: {
           include: {
-            teamsUsers: true,
+            teamsUsers: {
+              include: {
+                function: true,
+              },
+            },
           },
         },
       },
     });
+
+    if (events.length) {
+      events.map((event: any) => {
+        event = this.eventService.eventCost(event);
+
+        return event;
+      });
+    }
+
+    if (pastEvents.length) {
+      for (let event of pastEvents) {
+        event = await this.eventService.eventCost(event);
+      }
+    }
 
     advertiser.events = events;
     advertiser.pastEvents = pastEvents;
