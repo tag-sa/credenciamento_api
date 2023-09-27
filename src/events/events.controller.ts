@@ -1,10 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   NotFoundException,
   Param,
   Post,
+  Put,
   Req,
   UseGuards,
 } from '@nestjs/common';
@@ -14,6 +16,7 @@ import { EventsService } from './events.service';
 import { AuthGuard } from 'src/auth/auth.guard';
 import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe';
 import { PrismaService } from 'src/prisma.service';
+import { AddUserToTeamDto } from './dto/add-user-to-team.dto';
 import { CreateEventTeamDto } from './dto/create-event-team.dto';
 
 @Controller('events')
@@ -124,5 +127,335 @@ export class EventsController {
     }
 
     return { data: await this.eventsService.createTeam(eventId, body) };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':id/teams/:teamId')
+  async getTeam(@Req() req, @Param('id') id: string, @Param('teamId') teamId) {
+    const userId = req['user'].id;
+    const eventId = +id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: eventId,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userId,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.eventsService.getTeam(+teamId);
+
+    return { data: team };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/:eventId/teams/:teamId/available-users')
+  async getAvailableUsers(
+    @Req() req,
+    @Param('eventId') eventId: string,
+    @Param('teamId') teamId: string,
+  ) {
+    const userId = req['user'].id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: +eventId,
+      },
+      select: {
+        advertiser_id: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userId,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: +teamId,
+        event_id: +eventId,
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    return {
+      data: await this.eventsService.getAvailableUsers(+eventId, +teamId),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/:eventId/teams/:teamId/:teamUserId/:userId')
+  async removeUserFromTeam(
+    @Req() req,
+    @Param('eventId') eventId: string,
+    @Param('teamId') teamId: string,
+    @Param('teamUserId') teamUserId: string,
+    @Param('userId') userId: string,
+  ) {
+    const userIdLogged = req['user'].id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: +eventId,
+      },
+      select: {
+        advertiser_id: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userIdLogged,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: +teamId,
+        event_id: +eventId,
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const teamUser = await this.prismaService.teamsUsers.findFirst({
+      where: {
+        id: +teamUserId,
+        teams_id: +teamId,
+        user_id: +userId,
+      },
+    });
+
+    if (!teamUser) {
+      throw new NotFoundException('Team user not found');
+    }
+
+    return {
+      data: await this.eventsService.removeUserFromTeam(+teamUserId),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Post('/:eventId/teams/:teamId/add')
+  async addUserToTeam(
+    @Req() req,
+    @Param('eventId') eventId: string,
+    @Param('teamId') teamId: string,
+    @Body(new JoiValidationPipe(AddUserToTeamDto.validationSchema)) body,
+  ) {
+    const { user_id: userId } = body;
+    const userIdLogged = req['user'].id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: +eventId,
+      },
+      select: {
+        advertiser_id: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userIdLogged,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: +teamId,
+        event_id: +eventId,
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const teamHasAvailability = await this.prismaService.teamsUsers.findFirst({
+      where: {
+        teams_id: +teamId,
+        user_id: null,
+      },
+    });
+
+    if (!teamHasAvailability) {
+      throw new NotFoundException('Team is full');
+    }
+
+    return {
+      data: await this.eventsService.addUserToTeam(
+        teamHasAvailability.id,
+        +userId,
+      ),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/:eventId/teams/:teamId/:teamUserId')
+  async removeUserFromTeamByUserId(
+    @Req() req,
+    @Param('eventId') eventId: string,
+    @Param('teamId') teamId: string,
+    @Param('teamUserId') teamUserId: string,
+  ) {
+    const userIdLogged = req['user'].id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: +eventId,
+      },
+      select: {
+        advertiser_id: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userIdLogged,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: +teamId,
+        event_id: +eventId,
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const teamUser = await this.prismaService.teamsUsers.findFirst({
+      where: {
+        id: +teamUserId,
+      },
+    });
+
+    if (!teamUser) {
+      throw new NotFoundException('Team user not found');
+    }
+
+    return {
+      data: await this.eventsService.removeUserFromTeam(+teamUser.id),
+    };
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/:eventId/teams/:teamId/:teamUserId/confirm')
+  async confirmUserInTeam(
+    @Req() req,
+    @Param('eventId') eventId: string,
+    @Param('teamId') teamId: string,
+    @Param('teamUserId') teamUserId: string,
+  ) {
+    const userIdLogged = req['user'].id;
+
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: +eventId,
+      },
+      select: {
+        advertiser_id: true,
+      },
+    });
+
+    if (!event) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const checkAdvertiser = await this.prismaService.usersAdvertises.findFirst({
+      where: {
+        user_id: userIdLogged,
+        advertiser_id: event.advertiser_id,
+      },
+    });
+
+    if (!checkAdvertiser) {
+      throw new NotFoundException('Event not found');
+    }
+
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: +teamId,
+        event_id: +eventId,
+      },
+    });
+
+    if (!team) {
+      throw new NotFoundException('Team not found');
+    }
+
+    const teamUser = await this.prismaService.teamsUsers.findFirst({
+      where: {
+        id: +teamUserId,
+        teams_id: +teamId,
+      },
+    });
+
+    if (!teamUser) {
+      throw new NotFoundException('Team user not found');
+    }
+
+    return {
+      data: await this.eventsService.confirmUserInTeam(+teamUserId),
+    };
   }
 }

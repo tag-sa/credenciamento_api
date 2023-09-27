@@ -65,8 +65,24 @@ describe('EventsService', () => {
 
     const data = await service.eventCost(event);
 
-    console.log(data);
-
     expect(data.total_preview).toEqual(mockEventCost.total_preview);
+  });
+
+  it('should return team cost', async () => {
+    const randomTeam = await prismaService.teams.findFirst({
+      include: {
+        teamsUsers: {
+          include: {
+            function: true,
+          },
+        },
+      },
+    });
+
+    const team = await service.getTeam(randomTeam.id);
+
+    expect(team.total_preview).toBeDefined();
+    expect(team.total_by_answers).toBeDefined();
+    expect(team.total).toBeDefined();
   });
 });

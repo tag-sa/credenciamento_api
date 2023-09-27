@@ -15,6 +15,7 @@ describe('EventsController', () => {
   let advertiserId = null;
   let placeId = null;
   let eventId = null;
+  let teamId = null;
 
   beforeEach(async () => {
     jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -204,6 +205,8 @@ describe('EventsController', () => {
       .set('Authorization', `Bearer ${bearerToken}`)
       .set('Content-Type', 'application/json');
 
+    teamId = data.body.data.id;
+
     expect(data.status).toBe(HttpStatus.CREATED);
     expect(data.body.data.id).toBeDefined();
     expect(data.body.data.teamsUsers).toBeDefined();
@@ -232,6 +235,20 @@ describe('EventsController', () => {
     expect(data.body.data.total_by_answers).toBe(0);
   });
 
+  it('should return a team with team costs preview', async () => {
+    const data = await request(app.getHttpServer())
+      .get(`/events/${eventId}/teams/${teamId}`)
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    expect(data.status).toBe(HttpStatus.OK);
+    expect(data.body.data.total_preview).toBeDefined();
+    expect(data.body.data.total_preview).toBeGreaterThan(0);
+    expect(data.body.data.total_executed).toBeDefined();
+    expect(data.body.data.total_executed).toBe(0);
+    expect(data.body.data.total_by_answers).toBeDefined();
+    expect(data.body.data.total_by_answers).toBe(0);
+  });
+
   it('should return unauthorized from create event team without token', async () => {
     const data = await request(app.getHttpServer()).post(
       `/events/${eventId}/teams`,
@@ -246,5 +263,14 @@ describe('EventsController', () => {
       .set('Authorization', `Bearer ${bearerToken}`);
 
     expect(data.status).toBe(HttpStatus.BAD_REQUEST);
+  });
+
+  it('should return a list of users available for a team', async () => {
+    const data = await request(app.getHttpServer())
+      .get(`/events/${eventId}/teams/${teamId}/available-users`)
+      .set('Authorization', `Bearer ${bearerToken}`);
+
+    expect(data.status).toBe(HttpStatus.OK);
+    expect(data.body.data.length).toBeGreaterThan(0);
   });
 });

@@ -32,6 +32,22 @@ export class EventsService {
     return event;
   }
 
+  async getTeam(teamId: number) {
+    const geatTeam = await this.prismaService.teams.findFirst({
+      where: {
+        id: teamId,
+      },
+      include: {
+        teamStatus: true,
+        teamsUsers: { include: { user: true, function: true } },
+      },
+    });
+
+    const [team] = this.teamCost([geatTeam]);
+
+    return team;
+  }
+
   async create(createEventDto: CreateEventDto) {
     let save = await this.prismaService.events.create({
       data: {
@@ -123,7 +139,7 @@ export class EventsService {
       (a, b: any) => a + b.total_preview,
       0,
     );
-    const total = event.teams.reduce((a, b: any) => a + b.total, 0);
+    const total = event.teams.reduce((a, b: any) => a + b.total_executed, 0);
     const totalByAnswers = event.teams.reduce(
       (a, b: any) => a + b.total_by_answers,
       0,
@@ -140,7 +156,7 @@ export class EventsService {
     teams.map((team: any) => {
       team.total_preview = 0;
       team.total_by_answers = 0;
-      team.total = 0;
+      team.total_executed = 0;
 
       team.teamsUsers.map((tu) => {
         let teamMemberCostPreview = 0;
@@ -177,7 +193,7 @@ export class EventsService {
 
         team.total_preview += teamMemberCostPreview;
         team.total_by_answers += teamMemberCostPreviewByAnswer;
-        team.total += teamMemberCostExecuted;
+        team.total_executed += teamMemberCostExecuted;
 
         return tu;
       });
@@ -186,5 +202,73 @@ export class EventsService {
     });
 
     return teams;
+  }
+
+  async getAvailableUsers(eventId: number, teamId: number): Promise<any[]> {
+    const teamsUsers = await this.prismaService.teamsUsers.findMany({
+      select: {
+        user_id: true,
+      },
+      where: {
+        teams_id: teamId,
+        AND: {
+          NOT: {
+            user_id: null,
+          },
+        },
+      },
+    });
+
+    const availableUsers = await this.prismaService.users.findMany({
+      where: {
+        NOT: {
+          id: {
+            in: teamsUsers.map((tu) => tu.user_id),
+          },
+        },
+      },
+    });
+
+    if (availableUsers.length) {
+      availableUsers.map((user) => delete user.password);
+    }
+
+    return availableUsers;
+  }
+
+  async confirmUserInTeam(teamUserId: number) {
+    return await this.prismaService.teamsUsers.update({
+      where: {
+        id: teamUserId,
+      },
+      data: {
+        confirmed: 'c',
+      },
+    });
+  }
+
+  async addUserToTeam(teamUserId: number, userId: number) {
+    await this.prismaService.teamsUsers.update({
+      where: {
+        id: teamUserId,
+      },
+      data: {
+        user_id: userId,
+      },
+    });
+
+    return true;
+  }
+
+  async removeUserFromTeam(teamUserId: number) {
+    return await this.prismaService.teamsUsers.update({
+      where: {
+        id: teamUserId,
+      },
+      data: {
+        confirmed: 'a',
+        user_id: null,
+      },
+    });
   }
 }
