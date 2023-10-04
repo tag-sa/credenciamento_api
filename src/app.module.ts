@@ -6,6 +6,7 @@ import { AdvertisersModule } from './advertisers/advertisers.module';
 import { ZipModule } from './zip/zip.module';
 import { EventsModule } from './events/events.module';
 import { FunctionsModule } from './functions/functions.module';
+import { OccurrencesModule } from './occurrences/occurrences.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { FunctionsModule } from './functions/functions.module';
     AdvertisersModule,
     EventsModule,
     FunctionsModule,
+    OccurrencesModule,
   ],
   controllers: [],
   providers: [],

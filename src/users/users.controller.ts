@@ -1,30 +1,30 @@
 import {
+  Body,
   Controller,
   Get,
-  Post,
-  Body,
-  Req,
-  UseGuards,
-  UnauthorizedException,
-  UsePipes,
   HttpCode,
-  Put,
   Param,
+  Post,
+  Put,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+  UsePipes,
 } from '@nestjs/common';
 
-import { UsersService } from './users.service';
-import { UserDto } from './dto/user.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { JwtService } from '@nestjs/jwt';
-import { LoginUserDto } from './dto/login-user.dto';
 import bcrypt from 'bcryptjs';
 import { Request } from 'express';
+import { AuthGuard } from 'src/auth/auth.guard';
 import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe';
-import { User } from './entities/user.entity';
 import { UniqueEmailPipe } from 'src/pipes/UniqueEmailPipe';
+import { LoginUserDto } from './dto/login-user.dto';
+import { UserDto } from './dto/user.dto';
+import { User } from './entities/user.entity';
+import { UsersService } from './users.service';
 
-import { Address } from './entities/address.entity';
 import { UniqueCpfCnpjPipe } from 'src/pipes/UniqueCpfCnpjPipe';
+import { Address } from './entities/address.entity';
 
 @Controller('users')
 export class UsersController {
@@ -95,5 +95,11 @@ export class UsersController {
   @Get('me')
   getProfile(@Req() req: Request & { user: User }) {
     return { data: req.user };
+  }
+
+  @UseGuards(AuthGuard)
+  @Get(':userId/worker-profile')
+  async getWorkerProfile(@Param('userId') userId: string) {
+    return { data: await this.usersService.getWorkerProfile(+userId) };
   }
 }

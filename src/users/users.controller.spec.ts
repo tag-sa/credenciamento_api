@@ -1,19 +1,19 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { UsersController } from 'src/users/users.controller';
-import { UsersService } from 'src/users/users.service';
-import request from 'supertest';
-import { HttpStatus, INestApplication } from '@nestjs/common';
-import { AuthModule } from 'src/auth/auth.module';
-import { faker } from '@faker-js/faker';
-import { GenderType } from '@prisma/client';
-import { UserDto } from './dto/user.dto';
-import { User } from './entities/user.entity';
+import { faker } from '@faker-js/faker'
+import { HttpStatus, INestApplication } from '@nestjs/common'
+import { Test, TestingModule } from '@nestjs/testing'
+import { GenderType } from '@prisma/client'
+import { AuthModule } from 'src/auth/auth.module'
+import { PrismaModule } from 'src/prisma/prisma.module'
+import { UsersController } from 'src/users/users.controller'
+import { UsersService } from 'src/users/users.service'
+import request from 'supertest'
+import { UserDto } from './dto/user.dto'
+import { User } from './entities/user.entity'
 
 describe('UsersController', () => {
-  let app: INestApplication;
-  let controller: UsersController;
-  let bearerToken = null;
+  let app: INestApplication
+  let controller: UsersController
+  let bearerToken = null
 
   const createUser: UserDto = {
     name: faker.person.fullName(),
@@ -24,67 +24,64 @@ describe('UsersController', () => {
     rg_emitted_by: faker.location.state(),
     password: 'qwert123',
     gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
-    birthdate: faker.date.past(),
-  };
+    birthdate: faker.date.past()
+  }
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [UsersService],
-      imports: [PrismaModule, AuthModule],
-    }).compile();
+      imports: [PrismaModule, AuthModule]
+    }).compile()
 
-    controller = module.get<UsersController>(UsersController);
-    app = module.createNestApplication();
-    await app.init();
-  });
+    controller = module.get<UsersController>(UsersController)
+    app = module.createNestApplication()
+    await app.init()
+  })
 
   it('should be defined', () => {
-    expect(controller).toBeDefined();
-  });
+    expect(controller).toBeDefined()
+  })
 
   it(`/GET users`, async () => {
-    const data = await request(app.getHttpServer()).get('/users');
+    const data = await request(app.getHttpServer()).get('/users')
 
-    expect(data.status).toBe(HttpStatus.UNAUTHORIZED);
-  });
+    expect(data.status).toBe(HttpStatus.UNAUTHORIZED)
+  })
 
   it('should return bad request from empty login payload', async () => {
-    const data = await request(app.getHttpServer()).post('/users/login');
+    const data = await request(app.getHttpServer()).post('/users/login')
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should return bad request from login with empty email payload', async () => {
     const data = await request(app.getHttpServer()).post('/users/login').send({
-      password: 'password',
-    });
+      password: 'password'
+    })
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should return bad request from login with empty password payload', async () => {
     const data = await request(app.getHttpServer()).post('/users/login').send({
-      email: 'email',
-    });
+      email: 'email'
+    })
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should return unauthorized from login with wrong email', async () => {
-    const data = await request(app.getHttpServer())
-      .post('/users/login')
-      .send({ email: 'email@cda.com.br', password: 'senfha' })
-      .set('Content-Type', 'application/json');
+    const data = await request(app.getHttpServer()).post('/users/login').send({ email: 'email@cda.com.br', password: 'senfha' }).set('Content-Type', 'application/json')
 
-    expect(data.status).toBe(HttpStatus.UNAUTHORIZED);
-  });
+    expect(data.status).toBe(HttpStatus.UNAUTHORIZED)
+  })
 
   it('should return bad request from create user', async () => {
-    const data = await request(app.getHttpServer()).post('/users');
+    const data = await request(app.getHttpServer()).post('/users')
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should create and update a user without nickname', async () => {
     const nicknameLessUser: UserDto = {
@@ -96,8 +93,8 @@ describe('UsersController', () => {
       rg_emitted_by: faker.location.state(),
       password: 'qwert123',
       gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
-      birthdate: faker.date.past(),
-    };
+      birthdate: faker.date.past()
+    }
 
     const data = await request(app.getHttpServer())
       .post('/users')
@@ -111,33 +108,33 @@ describe('UsersController', () => {
           state: 'Estado Teste',
           number: '123',
           complement: 'Complemento Teste',
-          type: 'res',
-        },
+          type: 'res'
+        }
       })
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    nicknameLessUser.id = data.body.data.id;
+    nicknameLessUser.id = data.body.data.id
 
     const loginData = await request(app.getHttpServer())
       .post('/users/login')
       .send({
         email: nicknameLessUser.email,
-        password: nicknameLessUser.password,
+        password: nicknameLessUser.password
       })
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    const bearerToken = loginData.body.data.access_token;
+    const bearerToken = loginData.body.data.access_token
 
     const update = await request(app.getHttpServer())
       .put(`/users/${nicknameLessUser.id}`)
       .send({
-        nickname: faker.person.fullName().split(' ')[0],
+        nickname: faker.person.fullName().split(' ')[0]
       })
-      .set('Authorization', `Bearer ${bearerToken}`);
+      .set('Authorization', `Bearer ${bearerToken}`)
 
-    expect(data.status).toBe(HttpStatus.CREATED);
-    expect(update.status).toBe(HttpStatus.OK);
-  });
+    expect(data.status).toBe(HttpStatus.CREATED)
+    expect(update.status).toBe(HttpStatus.OK)
+  })
   it('should create a user', async () => {
     const data = await request(app.getHttpServer())
       .post('/users')
@@ -151,99 +148,83 @@ describe('UsersController', () => {
           state: 'Estado Teste',
           number: '123',
           complement: 'Complemento Teste',
-          type: 'res',
-        },
+          type: 'res'
+        }
       })
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    createUser.id = data.body.data.id;
+    createUser.id = data.body.data.id
 
-    expect(data.status).toBe(HttpStatus.CREATED);
-  });
+    expect(data.status).toBe(HttpStatus.CREATED)
+  })
 
   it('should return unauthorized from login with wrong password', async () => {
-    const data = await request(app.getHttpServer())
-      .post('/users/login')
-      .send({ email: createUser.email, password: '12345567' })
-      .set('Content-Type', 'application/json');
+    const data = await request(app.getHttpServer()).post('/users/login').send({ email: createUser.email, password: '12345567' }).set('Content-Type', 'application/json')
 
-    expect(data.status).toBe(HttpStatus.UNAUTHORIZED);
-  });
+    expect(data.status).toBe(HttpStatus.UNAUTHORIZED)
+  })
 
   it('should login user', async () => {
-    const data = await request(app.getHttpServer())
-      .post('/users/login')
-      .send({ email: createUser.email, password: createUser.password })
-      .set('Content-Type', 'application/json');
-    bearerToken = data.body.data.access_token;
+    const data = await request(app.getHttpServer()).post('/users/login').send({ email: createUser.email, password: createUser.password }).set('Content-Type', 'application/json')
+    bearerToken = data.body.data.access_token
 
-    expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.data.access_token).toBeDefined();
-  });
+    expect(data.status).toBe(HttpStatus.OK)
+    expect(data.body.data.access_token).toBeDefined()
+  })
 
   it(`/GET users`, async () => {
-    const data = await request(app.getHttpServer())
-      .get('/users')
-      .set('Authorization', `Bearer ${bearerToken}`);
+    const data = await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${bearerToken}`)
 
-    expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.data.length).toBeGreaterThan(0);
-  });
+    expect(data.status).toBe(HttpStatus.OK)
+    expect(data.body.data.length).toBeGreaterThan(0)
+  })
 
   it('should get `me` data', async () => {
-    const data = await request(app.getHttpServer())
-      .get('/users/me')
-      .set('Authorization', `Bearer ${bearerToken}`);
+    const data = await request(app.getHttpServer()).get('/users/me').set('Authorization', `Bearer ${bearerToken}`)
 
-    expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.data.id).toBe(createUser.id);
-  });
+    expect(data.status).toBe(HttpStatus.OK)
+    expect(data.body.data.id).toBe(createUser.id)
+  })
 
   it('should return email duplicated from updated user', async () => {
-    const usersList = await request(app.getHttpServer())
-      .get('/users')
-      .set('Authorization', `Bearer ${bearerToken}`);
+    const usersList = await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${bearerToken}`)
 
-    const emailDuplicated = usersList.body.data.find(
-      (user: User) => user.email !== createUser.email,
-    );
+    const emailDuplicated = usersList.body.data.find((user: User) => user.email !== createUser.email)
 
     const data = await request(app.getHttpServer())
       .put(`/users/${createUser.id}`)
       .send({
-        email: emailDuplicated.email,
+        email: emailDuplicated.email
       })
       .set('Authorization', `Bearer ${bearerToken}`)
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should return cpf duplicated from updated user', async () => {
-    const usersList: any = await request(app.getHttpServer())
-      .get('/users')
-      .set('Authorization', `Bearer ${bearerToken}`);
+    const usersList: any = await request(app.getHttpServer()).get('/users').set('Authorization', `Bearer ${bearerToken}`)
 
     const randomUser = usersList.body.data.find((user: User) => {
       if (user.cpf) {
-        return user.cpf !== createUser.document;
+        return user.cpf !== createUser.document
       }
 
       if (user.cnpj) {
-        return user.cnpj !== createUser.document;
+        return user.cnpj !== createUser.document
       }
-    });
+    })
 
     const data = await request(app.getHttpServer())
       .put(`/users/${createUser.id}`)
       .send({
-        document: randomUser.cpf ? randomUser.cpf : randomUser.cnpj,
+        document: randomUser.cpf ? randomUser.cpf : randomUser.cnpj
       })
       .set('Authorization', `Bearer ${bearerToken}`)
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    expect(data.status).toBe(HttpStatus.BAD_REQUEST);
-  });
+    expect(data.status).toBe(HttpStatus.BAD_REQUEST)
+  })
 
   it('should update user', async () => {
     const data = await request(app.getHttpServer())
@@ -252,61 +233,81 @@ describe('UsersController', () => {
         name: 'Teste',
         password: '12345687979',
         cpf: (Math.random() + 1).toString(36).substring(6),
-        email: faker.internet.email(),
+        email: faker.internet.email()
       })
       .set('Authorization', `Bearer ${bearerToken}`)
-      .set('Content-Type', 'application/json');
+      .set('Content-Type', 'application/json')
 
-    expect(data.status).toBe(HttpStatus.OK);
-    expect(data.body.data.name).toBe('Teste');
-  });
+    expect(data.status).toBe(HttpStatus.OK)
+    expect(data.body.data.name).toBe('Teste')
+  })
+
+  it('should return worker profile', async () => {
+    const expectReturnObj = {
+      data: {
+        id: expect.any(Number),
+        name: expect.any(String),
+        email: expect.any(String),
+        birthdate: expect.any(String),
+        document: expect.any(String),
+        score: expect.any(Number),
+        addresses: expect.any(Object),
+        UsersCourses: expect.any(Object),
+        UsersFunctions: expect.any(Object),
+        worked_events: expect.any(Object)
+      }
+    }
+
+    const data = await request(app.getHttpServer()).get(`/users/${createUser.id}/worker-profile`).set('Authorization', `Bearer ${bearerToken}`)
+
+    expect(data.status).toBe(HttpStatus.OK)
+    expect(data.body).toMatchObject(expectReturnObj)
+  })
 
   afterAll(async () => {
-    await app.close();
-  });
-});
+    await app.close()
+  })
+})
 
 function generateRandomDocument() {
   if (Math.random() < 0.5) {
-    return generateCPF();
+    return generateCPF()
   } else {
-    return generateCNPJ();
+    return generateCNPJ()
   }
 }
 
 function generateCPF() {
-  const randomDigits = () => Math.floor(Math.random() * 10);
+  const randomDigits = () => Math.floor(Math.random() * 10)
 
-  const cpfArray = new Array(9).fill(null).map(randomDigits);
+  const cpfArray = new Array(9).fill(null).map(randomDigits)
 
-  const firstVerifier =
-    cpfArray.reduce((acc, digit, index) => acc + digit * (10 - index), 0) % 11;
-  cpfArray.push(firstVerifier < 2 ? 0 : 11 - firstVerifier);
+  const firstVerifier = cpfArray.reduce((acc, digit, index) => acc + digit * (10 - index), 0) % 11
+  cpfArray.push(firstVerifier < 2 ? 0 : 11 - firstVerifier)
 
-  const secondVerifier =
-    cpfArray.reduce((acc, digit, index) => acc + digit * (11 - index), 0) % 11;
-  cpfArray.push(secondVerifier < 2 ? 0 : 11 - secondVerifier);
+  const secondVerifier = cpfArray.reduce((acc, digit, index) => acc + digit * (11 - index), 0) % 11
+  cpfArray.push(secondVerifier < 2 ? 0 : 11 - secondVerifier)
 
-  return cpfArray.join('');
+  return cpfArray.join('')
 }
 
 function generateCNPJ() {
-  const randomDigits = () => Math.floor(Math.random() * 10);
+  const randomDigits = () => Math.floor(Math.random() * 10)
 
-  const cnpjArray = new Array(12).fill(null).map(randomDigits);
+  const cnpjArray = new Array(12).fill(null).map(randomDigits)
 
-  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 5));
-  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 6));
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 5))
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 6))
 
-  return cnpjArray.join('');
+  return cnpjArray.join('')
 }
 
 function calculateCNPJVerifier(array, multiplier) {
-  let sum = 0;
+  let sum = 0
   for (let i = 0; i < array.length; i++) {
-    sum += array[i] * multiplier;
-    multiplier = multiplier === 2 ? 9 : multiplier - 1;
+    sum += array[i] * multiplier
+    multiplier = multiplier === 2 ? 9 : multiplier - 1
   }
-  const remainder = sum % 11;
-  return remainder < 2 ? 0 : 11 - remainder;
+  const remainder = sum % 11
+  return remainder < 2 ? 0 : 11 - remainder
 }

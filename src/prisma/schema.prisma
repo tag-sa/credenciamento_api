@@ -277,10 +277,11 @@ model Events {
   created       DateTime   @default(now())
   modified      DateTime   @default(now()) @updatedAt
 
-  place      Places      @relation(fields: [place_id], references: [id], onDelete: Cascade)
-  advertiser Advertisers @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
-  images     Images[]
-  teams      Teams[]
+  place             Places              @relation(fields: [place_id], references: [id], onDelete: Cascade)
+  advertiser        Advertisers         @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
+  images            Images[]
+  teams             Teams[]
+  EventsOccurrences EventsOccurrences[]
 
   @@map("events")
 }
@@ -412,10 +413,11 @@ model TeamsUsers {
   total_amount          Float?
   teams_users_status_id Int
 
-  user             Users?            @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  team             Teams             @relation(fields: [teams_id], references: [id], onDelete: Cascade)
-  function         Functions         @relation(fields: [function_id], references: [id], onDelete: Cascade)
-  TeamsUsersStatus TeamsUsersStatus? @relation(fields: [teams_users_status_id], references: [id], onDelete: Restrict)
+  user              Users?              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  team              Teams               @relation(fields: [teams_id], references: [id], onDelete: Cascade)
+  function          Functions           @relation(fields: [function_id], references: [id], onDelete: Cascade)
+  TeamsUsersStatus  TeamsUsersStatus?   @relation(fields: [teams_users_status_id], references: [id], onDelete: Restrict)
+  EventsOccurrences EventsOccurrences[]
 
   @@unique([teams_id, user_id])
   @@map("teams_users")
@@ -432,4 +434,32 @@ model UsersFunctions {
   @@unique([user_id, function_id])
   @@unique([user_id, function_id, default])
   @@map("users_functions")
+}
+
+model Occurrences {
+  id                Int                 @id @default(autoincrement())
+  name              String
+  description       String?
+  created           DateTime            @default(now())
+  modified          DateTime            @default(now()) @updatedAt
+  EventsOccurrences EventsOccurrences[]
+
+  @@map("occurrences")
+}
+
+model EventsOccurrences {
+  id            Int      @id @default(autoincrement())
+  event_id      Int
+  user_id       Int
+  team_user_id  Int
+  occurrence_id Int
+  observation   String?
+  created       DateTime @default(now())
+  modified      DateTime @default(now()) @updatedAt
+
+  event      Events      @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  occurrence Occurrences @relation(fields: [occurrence_id], references: [id], onDelete: Cascade)
+  teamUser   TeamsUsers  @relation(fields: [team_user_id], references: [id], onDelete: Cascade)
+
+  @@map("events_occurrences")
 }
