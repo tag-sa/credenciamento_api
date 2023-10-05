@@ -59,6 +59,7 @@ model Users {
   UsersCourses    UsersCourses[]
   UsersAdvertises UsersAdvertises[]
   UsersFunctions  UsersFunctions[]
+  UsersFavorites  UsersFavorites[]
 
   @@map("users")
 }
@@ -383,6 +384,18 @@ model Teams {
   event      Events       @relation(fields: [event_id], references: [id], onDelete: Cascade)
 
   @@map("teams")
+}
+
+model UsersFavorites {
+  id        Int      @id @default(autoincrement())
+  user_id   Int
+  entity    String
+  entity_id Int
+  created   DateTime @default(now())
+
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("users_favorites")
 }
 
 model TeamsUsersStatus {

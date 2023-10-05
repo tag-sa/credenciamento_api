@@ -65,6 +65,7 @@ export class UsersController {
   @UsePipes(new JoiValidationPipe(LoginUserDto.validationSchema))
   @HttpCode(200)
   async login(@Body() signInDto: LoginUserDto, @Req() req: Request) {
+    console.log('oi')
     const user = await this.usersService.findByEmail(signInDto.email);
     if (!user) {
       throw new UnauthorizedException();

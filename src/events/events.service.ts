@@ -28,7 +28,7 @@ export class EventsService {
     });
 
     event = await this.eventCost(event);
-
+    console.log(event)
     return event;
   }
 
@@ -80,6 +80,8 @@ export class EventsService {
         date_start: moment(body.date_start).toDate(),
         date_end: moment(body.date_end).toDate(),
         extra_amount: body.extra_amount,
+        
+
       },
     });
 
