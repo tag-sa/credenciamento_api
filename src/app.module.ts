@@ -7,6 +7,7 @@ import { ZipModule } from './zip/zip.module';
 import { EventsModule } from './events/events.module';
 import { FunctionsModule } from './functions/functions.module';
 import { JobsModule } from './jobs/jobs.module';
+import { OccurrencesModule } from './occurrences/occurrences.module';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import { JobsModule } from './jobs/jobs.module';
     AdvertisersModule,
     EventsModule,
     FunctionsModule,
-    JobsModule
+    JobsModule,
+    OccurrencesModule,
   ],
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule { }

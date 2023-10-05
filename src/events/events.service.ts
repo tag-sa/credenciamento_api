@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
-import { StatusType } from '@prisma/client';
-import moment from 'moment';
-import { PrismaService } from 'src/prisma.service';
-import { CreateEventTeamUserDto } from './dto/create-event-team-user.dto';
-import { CreateEventTeamDto } from './dto/create-event-team.dto';
-import { CreateEventDto } from './dto/create-event.dto';
+import { Injectable } from '@nestjs/common'
+import { StatusType } from '@prisma/client'
+import moment from 'moment'
+import { PrismaService } from 'src/prisma.service'
+import { CreateEventTeamUserDto } from './dto/create-event-team-user.dto'
+import { CreateEventTeamDto } from './dto/create-event-team.dto'
+import { CreateEventDto } from './dto/create-event.dto'
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) { }
 
   async getEvent(eventId: number) {
     let event = await this.prismaService.events.findFirst({
       where: {
-        id: eventId,
+        id: eventId
       },
       include: {
         place: true,
@@ -21,11 +21,11 @@ export class EventsService {
         teams: {
           include: {
             teamStatus: true,
-            teamsUsers: { include: { user: true, function: true } },
-          },
-        },
-      },
-    });
+            teamsUsers: { include: { user: true, function: true } }
+          }
+        }
+      }
+    })
 
     event = await this.eventCost(event);
     console.log(event)
@@ -35,17 +35,17 @@ export class EventsService {
   async getTeam(teamId: number) {
     const geatTeam = await this.prismaService.teams.findFirst({
       where: {
-        id: teamId,
+        id: teamId
       },
       include: {
         teamStatus: true,
-        teamsUsers: { include: { user: true, function: true } },
-      },
-    });
+        teamsUsers: { include: { user: true, function: true } }
+      }
+    })
 
-    const [team] = this.teamCost([geatTeam]);
+    const [team] = this.teamCost([geatTeam])
 
-    return team;
+    return team
   }
 
   async create(createEventDto: CreateEventDto) {
@@ -56,19 +56,16 @@ export class EventsService {
         date_end: moment(createEventDto.date_end).toDate(),
         status: StatusType[createEventDto.status],
         place_id: createEventDto.place_id,
-        advertiser_id: createEventDto.advertiser_id,
-      },
-    });
+        advertiser_id: createEventDto.advertiser_id
+      }
+    })
 
-    save = await this.eventCost(save);
+    save = await this.eventCost(save)
 
-    return save;
+    return save
   }
 
-  async createTeam(
-    eventId: number,
-    body: CreateEventTeamDto & { functions_id: number },
-  ) {
+  async createTeam(eventId: number, body: CreateEventTeamDto & { functions_id: number }) {
     const saveTeam = await this.prismaService.teams.create({
       data: {
         event_id: eventId,
@@ -80,14 +77,14 @@ export class EventsService {
         date_start: moment(body.date_start).toDate(),
         date_end: moment(body.date_end).toDate(),
         extra_amount: body.extra_amount,
-        
+
 
       },
     });
 
-    const teamId = saveTeam.id;
+    const teamId = saveTeam.id
 
-    const teamsUsersToCreate = [];
+    const teamsUsersToCreate = []
 
     Array.from({ length: body.quantity }).map(() => {
       const newTeamUser: CreateEventTeamUserDto = {
@@ -97,180 +94,175 @@ export class EventsService {
         date_end: moment(body.date_end).toDate(),
         confirmed: 'a',
         user_id: null,
-        teams_users_status_id: 1,
-      };
+        teams_users_status_id: 1
+      }
 
-      teamsUsersToCreate.push(newTeamUser);
-    });
+      teamsUsersToCreate.push(newTeamUser)
+    })
 
     await this.prismaService.teamsUsers.createMany({
-      data: teamsUsersToCreate,
-    });
+      data: teamsUsersToCreate
+    })
 
     const teamToReturn = await this.prismaService.teams.findFirst({
       where: {
-        id: teamId,
+        id: teamId
       },
       include: {
         teamStatus: true,
         teamsUsers: {
           include: {
-            function: true,
-          },
-        },
-      },
-    });
+            function: true
+          }
+        }
+      }
+    })
 
-    const [team] = this.teamCost([teamToReturn]);
+    const [team] = this.teamCost([teamToReturn])
 
-    return team;
+    return team
   }
 
   async eventCost(event: any) {
     if (!event.teams) {
-      event.total_preview = 0;
-      event.total_executed = 0;
-      event.total_by_answers = 0;
+      event.total_preview = 0
+      event.total_executed = 0
+      event.total_by_answers = 0
 
-      return event;
+      return event
     }
 
-    event.teams = this.teamCost(event.teams);
+    event.teams = this.teamCost(event.teams)
 
-    const total_preview = event.teams.reduce(
-      (a, b: any) => a + b.total_preview,
-      0,
-    );
-    const total = event.teams.reduce((a, b: any) => a + b.total_executed, 0);
-    const totalByAnswers = event.teams.reduce(
-      (a, b: any) => a + b.total_by_answers,
-      0,
-    );
+    const total_preview = event.teams.reduce((a, b: any) => a + b.total_preview, 0)
+    const total = event.teams.reduce((a, b: any) => a + b.total_executed, 0)
+    const totalByAnswers = event.teams.reduce((a, b: any) => a + b.total_by_answers, 0)
 
-    event.total_preview = total_preview;
-    event.total_executed = total;
-    event.total_by_answers = totalByAnswers;
+    event.total_preview = total_preview
+    event.total_executed = total
+    event.total_by_answers = totalByAnswers
 
-    return event;
+    return event
   }
 
   teamCost(teams: any[]) {
     teams.map((team: any) => {
-      team.total_preview = 0;
-      team.total_by_answers = 0;
-      team.total_executed = 0;
+      team.total_preview = 0
+      team.total_by_answers = 0
+      team.total_executed = 0
 
       team.teamsUsers.map((tu) => {
-        let teamMemberCostPreview = 0;
-        let teamMemberCostPreviewByAnswer = 0;
-        let teamMemberCostExecuted = 0;
+        let teamMemberCostPreview = 0
+        let teamMemberCostPreviewByAnswer = 0
+        let teamMemberCostExecuted = 0
 
-        const starWork = moment(tu.date_start);
-        const endWork = moment(tu.date_end);
+        const starWork = moment(tu.date_start)
+        const endWork = moment(tu.date_end)
 
-        const workedMinutes = endWork.diff(starWork, 'minutes');
+        const workedMinutes = endWork.diff(starWork, 'minutes')
 
-        tu.minutes_worked = workedMinutes;
+        tu.minutes_worked = workedMinutes
 
         if (tu.function.tax_type == 'period') {
-          teamMemberCostPreview = tu.function.tax + tu.extra_amount;
+          teamMemberCostPreview = tu.function.tax + tu.extra_amount
         }
 
         if (tu.function.tax_type == 'hour') {
-          const taxByMinute = tu.function.tax / 60;
+          const taxByMinute = tu.function.tax / 60
 
-          teamMemberCostPreview = workedMinutes * taxByMinute + tu.extra_amount;
+          teamMemberCostPreview = workedMinutes * taxByMinute + tu.extra_amount
         }
 
         if (tu.confirmed == 'c' && tu.user_id != null) {
-          teamMemberCostPreviewByAnswer = teamMemberCostPreview;
+          teamMemberCostPreviewByAnswer = teamMemberCostPreview
 
           if (tu.teams_users_status_id == 2) {
-            teamMemberCostExecuted = teamMemberCostPreview;
+            teamMemberCostExecuted = teamMemberCostPreview
           }
         }
 
-        tu.worked_amount = teamMemberCostPreview;
-        tu.total_amount = teamMemberCostPreview;
+        tu.worked_amount = teamMemberCostPreview
+        tu.total_amount = teamMemberCostPreview
 
-        team.total_preview += teamMemberCostPreview;
-        team.total_by_answers += teamMemberCostPreviewByAnswer;
-        team.total_executed += teamMemberCostExecuted;
+        team.total_preview += teamMemberCostPreview
+        team.total_by_answers += teamMemberCostPreviewByAnswer
+        team.total_executed += teamMemberCostExecuted
 
-        return tu;
-      });
+        return tu
+      })
 
-      return team;
-    });
+      return team
+    })
 
-    return teams;
+    return teams
   }
 
   async getAvailableUsers(eventId: number, teamId: number): Promise<any[]> {
     const teamsUsers = await this.prismaService.teamsUsers.findMany({
       select: {
-        user_id: true,
+        user_id: true
       },
       where: {
         teams_id: teamId,
         AND: {
           NOT: {
-            user_id: null,
-          },
-        },
-      },
-    });
+            user_id: null
+          }
+        }
+      }
+    })
 
     const availableUsers = await this.prismaService.users.findMany({
       where: {
+        type: 'pf',
         NOT: {
           id: {
-            in: teamsUsers.map((tu) => tu.user_id),
-          },
-        },
-      },
-    });
+            in: teamsUsers.map((tu) => tu.user_id)
+          }
+        }
+      }
+    })
 
     if (availableUsers.length) {
-      availableUsers.map((user) => delete user.password);
+      availableUsers.map((user) => delete user.password)
     }
 
-    return availableUsers;
+    return availableUsers
   }
 
   async confirmUserInTeam(teamUserId: number) {
     return await this.prismaService.teamsUsers.update({
       where: {
-        id: teamUserId,
+        id: teamUserId
       },
       data: {
-        confirmed: 'c',
-      },
-    });
+        confirmed: 'c'
+      }
+    })
   }
 
   async addUserToTeam(teamUserId: number, userId: number) {
     await this.prismaService.teamsUsers.update({
       where: {
-        id: teamUserId,
+        id: teamUserId
       },
       data: {
-        user_id: userId,
-      },
-    });
+        user_id: userId
+      }
+    })
 
-    return true;
+    return true
   }
 
   async removeUserFromTeam(teamUserId: number) {
     return await this.prismaService.teamsUsers.update({
       where: {
-        id: teamUserId,
+        id: teamUserId
       },
       data: {
         confirmed: 'a',
-        user_id: null,
-      },
-    });
+        user_id: null
+      }
+    })
   }
 }
