@@ -29,6 +29,20 @@ enum TeamsUsersStatusType {
   d
 }
 
+enum JobsTypes {
+  general
+  by_function
+}
+
+enum NotificationsTypesUsersTypes {
+  all
+  system
+  email
+  push
+  sms
+  whatsapp
+}
+
 model Users {
   id                    Int         @id @default(autoincrement())
   name                  String
@@ -51,14 +65,17 @@ model Users {
   change_password       Boolean?    @default(false)
   score                 Int         @default(0)
 
-  group_users     GroupsUsers[]
-  logs            Logs[]
-  users_sessions  UsersSessions[]
-  addresses       Address[]
-  teams_users     TeamsUsers[]
-  UsersCourses    UsersCourses[]
-  UsersAdvertises UsersAdvertises[]
-  UsersFunctions  UsersFunctions[]
+  group_users             GroupsUsers[]
+  logs                    Logs[]
+  users_sessions          UsersSessions[]
+  addresses               Address[]
+  teams_users             TeamsUsers[]
+  UsersCourses            UsersCourses[]
+  UsersAdvertises         UsersAdvertises[]
+  UsersFunctions          UsersFunctions[]
+  UsersSettings           UsersSettings[]
+  NotificationsTypesUsers NotificationsTypesUsers[]
+  NotificationsStatus     NotificationsStatus[]
 
   @@map("users")
 }
@@ -413,7 +430,7 @@ model TeamsUsers {
   total_amount          Float?
   teams_users_status_id Int
 
-  user              Users?              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user              Users?              @relation(fields: [user_id], references: [id], onDelete: SetNull)
   team              Teams               @relation(fields: [teams_id], references: [id], onDelete: Cascade)
   function          Functions           @relation(fields: [function_id], references: [id], onDelete: Cascade)
   TeamsUsersStatus  TeamsUsersStatus?   @relation(fields: [teams_users_status_id], references: [id], onDelete: Restrict)
@@ -462,4 +479,76 @@ model EventsOccurrences {
   teamUser   TeamsUsers  @relation(fields: [team_user_id], references: [id], onDelete: Cascade)
 
   @@map("events_occurrences")
+}
+
+model UsersSettings {
+  id                          Int       @id @default(autoincrement())
+  user_id                     Int
+  enable_convocation          Boolean   @default(true)
+  jobs_types                  JobsTypes @default(general)
+  distance                    Int       @default(10)
+  show_score                  Boolean   @default(true)
+  show_jobs_worked            Boolean   @default(true)
+  convocations_needs_approval Boolean   @default(true)
+  disabled_notifications      Boolean   @default(false)
+  disabled_jobs_notifications Boolean   @default(false)
+
+  modified DateTime @default(now()) @updatedAt
+
+  user Users @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("users_settings")
+}
+
+model NotificationsTypes {
+  id                      Int                       @id @default(autoincrement())
+  name                    String
+  Notifications           Notifications[]
+  NotificationsTypesUsers NotificationsTypesUsers[]
+
+  @@map("notifications_types")
+}
+
+model Notifications {
+  id                     Int      @id @default(autoincrement())
+  description            String
+  link                   String?
+  reference              String
+  reference_id           Int
+  notifications_types_id Int
+  created                DateTime @default(now())
+
+  notifications_types NotificationsTypes    @relation(fields: [notifications_types_id], references: [id], onDelete: Cascade)
+  NotificationsStatus NotificationsStatus[]
+
+  @@map("notifications")
+}
+
+model NotificationsStatus {
+  id                           Int      @id @default(autoincrement())
+  users_id                     Int
+  notifications_id             Int
+  read                         Boolean  @default(false)
+  modified                     DateTime @default(now()) @updatedAt
+  notifications_types_users_id Int?
+
+  user                      Users                    @relation(fields: [users_id], references: [id], onDelete: Cascade)
+  notifications             Notifications            @relation(fields: [notifications_id], references: [id], onDelete: Cascade)
+  notifications_types_users NotificationsTypesUsers? @relation(fields: [notifications_types_users_id], references: [id], onDelete: SetNull)
+
+  @@map("notifications_status")
+}
+
+model NotificationsTypesUsers {
+  id                     Int                          @id @default(autoincrement())
+  notifications_types_id Int
+  user_id                Int
+  created                DateTime                     @default(now())
+  type                   NotificationsTypesUsersTypes @default(email)
+
+  notifications_types NotificationsTypes    @relation(fields: [notifications_types_id], references: [id], onDelete: Cascade)
+  user                Users                 @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  NotificationsStatus NotificationsStatus[]
+
+  @@map("notifications_types_users")
 }

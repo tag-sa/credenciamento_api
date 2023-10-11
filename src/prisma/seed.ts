@@ -12,6 +12,8 @@ const functions = [
   { id: 5, name: 'Manobrista' }
 ]
 
+const notifications = [{ id: 1, name: 'Notificações de vagas' }]
+
 async function main() {
   for (const status of teamsStatus) {
     await prisma.teamsStatus.create({
@@ -22,6 +24,12 @@ async function main() {
   for (const func of functions) {
     await prisma.functions.create({
       data: func
+    })
+  }
+
+  for (const notif of notifications) {
+    await prisma.notificationsTypes.create({
+      data: notif
     })
   }
 }

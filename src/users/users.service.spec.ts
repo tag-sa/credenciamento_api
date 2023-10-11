@@ -1,36 +1,36 @@
-import { faker } from '@faker-js/faker';
-import { Test, TestingModule } from '@nestjs/testing';
-import { GenderType } from '@prisma/client';
-import { PrismaService } from 'src/prisma.service';
-import { PrismaModule } from 'src/prisma/prisma.module';
-import { UserDto } from './dto/user.dto';
-import { UsersService } from './users.service';
+import { faker } from '@faker-js/faker'
+import { Test, TestingModule } from '@nestjs/testing'
+import { GenderType } from '@prisma/client'
+import { PrismaService } from 'src/prisma.service'
+import { PrismaModule } from 'src/prisma/prisma.module'
+import { UsersService } from './UsersService'
+import { UserDto } from './dto/user.dto'
 
 describe('UsersService', () => {
-  let userService: UsersService;
-  let prismaService: PrismaService;
+  let userService: UsersService
+  let prismaService: PrismaService
 
   beforeEach(async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {})
     const module: TestingModule = await Test.createTestingModule({
       providers: [UsersService, PrismaService],
-      imports: [PrismaModule],
-    }).compile();
+      imports: [PrismaModule]
+    }).compile()
 
-    userService = module.get<UsersService>(UsersService);
-    prismaService = module.get<PrismaService>(PrismaService);
-  });
+    userService = module.get<UsersService>(UsersService)
+    prismaService = module.get<PrismaService>(PrismaService)
+  })
 
   it('should be defined', () => {
-    expect(userService).toBeDefined();
-    expect(prismaService).toBeDefined();
-  });
+    expect(userService).toBeDefined()
+    expect(prismaService).toBeDefined()
+  })
 
   it('should return an array of users', async () => {
-    const getUsers = await userService.findAll();
+    const getUsers = await userService.findAll()
 
-    expect(getUsers.length).toBeGreaterThanOrEqual(0);
-  });
+    expect(getUsers.length).toBeGreaterThanOrEqual(0)
+  })
 
   it('should create a user', async () => {
     const createUserDto: UserDto = {
@@ -44,75 +44,69 @@ describe('UsersService', () => {
       gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
       birthdate: faker.date.past(),
       status: ['a', 'i', 'b'].sort(() => Math.random() - 0.5)[0],
-      root: [true, false].sort(() => Math.random() - 0.5)[0],
-    };
+      root: [true, false].sort(() => Math.random() - 0.5)[0]
+    }
 
-    const save = await userService.create(createUserDto);
+    const save = await userService.create(createUserDto)
 
-    expect(save).toHaveProperty('id');
-  });
+    expect(save).toHaveProperty('id')
+  })
 
   it('should save user session', async () => {
-    const user = await prismaService.users.findFirst();
-    const fakeRandomToken = faker.string.uuid();
-    const save = await userService.saveUserSession(
-      user.id,
-      fakeRandomToken,
-      '127.0.0.1',
-    );
+    const user = await prismaService.users.findFirst()
+    const fakeRandomToken = faker.string.uuid()
+    const save = await userService.saveUserSession(user.id, fakeRandomToken, '127.0.0.1')
 
-    expect(save).toBeTruthy();
-  });
+    expect(save).toBeTruthy()
+  })
 
   it('should find user by email', async () => {
-    const user = await prismaService.users.findFirst();
-    const find = await userService.findByEmail(user.email);
+    const user = await prismaService.users.findFirst()
+    const find = await userService.findByEmail(user.email)
 
-    expect(find).toHaveProperty('id');
-  });
-});
+    expect(find).toHaveProperty('id')
+  })
+})
 
 function generateRandomDocument() {
   if (Math.random() < 0.5) {
-    return generateCPF();
+    return generateCPF()
   } else {
-    return generateCNPJ();
+    return generateCNPJ()
   }
 }
 
 function generateCPF() {
-  const randomDigits = () => Math.floor(Math.random() * 10);
+  const randomDigits = () => Math.floor(Math.random() * 10)
 
-  const cpfArray = new Array(9).fill(null).map(randomDigits);
+  const cpfArray = new Array(9).fill(null).map(randomDigits)
 
-  const firstVerifier =
-    cpfArray.reduce((acc, digit, index) => acc + digit * (10 - index), 0) % 11;
-  cpfArray.push(firstVerifier < 2 ? 0 : 11 - firstVerifier);
+  const firstVerifier = cpfArray.reduce((acc, digit, index) => acc + digit * (10 - index), 0) % 11
+  cpfArray.push(firstVerifier < 2 ? 0 : 11 - firstVerifier)
 
-  const secondVerifier =
-    cpfArray.reduce((acc, digit, index) => acc + digit * (11 - index), 0) % 11;
-  cpfArray.push(secondVerifier < 2 ? 0 : 11 - secondVerifier);
+  const secondVerifier = cpfArray.reduce((acc, digit, index) => acc + digit * (11 - index), 0) % 11
+  cpfArray.push(secondVerifier < 2 ? 0 : 11 - secondVerifier)
 
-  return cpfArray.join('');
+  return cpfArray.join('')
 }
 
 function generateCNPJ() {
-  const randomDigits = () => Math.floor(Math.random() * 10);
+  const randomDigits = () => Math.floor(Math.random() * 10)
 
-  const cnpjArray = new Array(12).fill(null).map(randomDigits);
+  const cnpjArray = new Array(12).fill(null).map(randomDigits)
 
-  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 5));
-  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 6));
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 5))
+  cnpjArray.push(calculateCNPJVerifier(cnpjArray, 6))
 
-  return cnpjArray.join('');
+  return cnpjArray.join('')
 }
 
 function calculateCNPJVerifier(array, multiplier) {
-  let sum = 0;
+  let sum = 0
   for (let i = 0; i < array.length; i++) {
-    sum += array[i] * multiplier;
-    multiplier = multiplier === 2 ? 9 : multiplier - 1;
+    sum += array[i] * multiplier
+    multiplier = multiplier === 2 ? 9 : multiplier - 1
   }
-  const remainder = sum % 11;
-  return remainder < 2 ? 0 : 11 - remainder;
+  const remainder = sum % 11
+  return remainder < 2 ? 0 : 11 - remainder
 }
