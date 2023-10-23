@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
 
+import { BullModule } from '@nestjs/bull'
 import { AdvertisersModule } from './advertisers/advertisers.module'
 import { EventsModule } from './events/events.module'
 import { FilesModule } from './files/files.module'
@@ -24,7 +25,19 @@ import { ZipModule } from './zip/zip.module'
     OccurrencesModule,
     NotificationsModule,
     FilesModule,
-    QualificationsModule
+    QualificationsModule,
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379
+      }
+    }),
+    BullModule.registerQueue({
+      name: 'audio',
+      redis: {
+        port: 6380
+      }
+    })
   ],
   controllers: []
 })
