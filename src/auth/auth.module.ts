@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common'
 import { JwtModule } from '@nestjs/jwt'
 import { PrismaModule } from 'src/prisma/prisma.module'
-import { UsersService } from 'src/users/UsersService'
+import { UsersService } from 'src/users/users.service'
 import { UsersModule } from '../users/users.module'
 import { jwtConstants } from './constants'
 

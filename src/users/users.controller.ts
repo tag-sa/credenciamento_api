@@ -1,27 +1,29 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post, Put, Req, UnauthorizedException, UseGuards, UsePipes } from '@nestjs/common'
-
 import { JwtService } from '@nestjs/jwt'
 import bcrypt from 'bcryptjs'
 import { Request } from 'express'
 import { AuthGuard } from 'src/auth/auth.guard'
 import { JoiValidationPipe } from 'src/pipes/JoiValidationPipe'
 import { UniqueEmailPipe } from 'src/pipes/UniqueEmailPipe'
-import { UsersService } from './UsersService'
 import { LoginUserDto } from './dto/login-user.dto'
 import { UserDto } from './dto/user.dto'
 import { User } from './entities/user.entity'
 
 import { NotificationsService, NotificationsTypes } from 'src/notifications/notifications.service'
 import { UniqueCpfCnpjPipe } from 'src/pipes/UniqueCpfCnpjPipe'
+import { PrismaService } from 'src/prisma.service'
+import { QualificationDto } from './dto/qualification.dto'
 import { UserSettingsDto } from './dto/user-seetings.dto'
 import { Address } from './entities/address.entity'
+import { UsersService } from './users.service'
 
 @Controller('users')
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
     private jwtService: JwtService,
-    private readonly notificationsService: NotificationsService
+    private readonly notificationsService: NotificationsService,
+    private readonly prismaService: PrismaService
   ) {}
 
   @UseGuards(AuthGuard)
@@ -83,7 +85,7 @@ export class UsersController {
   @UseGuards(AuthGuard)
   @Get('me')
   async getProfile(@Req() req: Request & { user: User }) {
-    return { data: req.user }
+    return { data: await this.usersService.me(+req.user.id) }
   }
 
   @UseGuards(AuthGuard)
@@ -145,6 +147,37 @@ export class UsersController {
     const userId = req.user.id
 
     await this.usersService.deleteUserAccount(+userId)
+
+    return 'ok'
+  }
+
+  @Post('qualification')
+  @UseGuards(AuthGuard)
+  async addQualification(@Req() req: Request & { user: User }, @Body(new JoiValidationPipe(QualificationDto.validationSchema)) body: QualificationDto) {
+    const userId = req.user.id
+
+    await this.usersService.addQualification(+userId, body)
+
+    return 'ok'
+  }
+
+  @Delete('qualification/:id')
+  @UseGuards(AuthGuard)
+  async deleteQualification(@Req() req: Request & { user: User }, @Param('id') courseId: string) {
+    const userId = req.user.id
+
+    const checkOwnership = await this.prismaService.usersCourses.findFirst({
+      where: {
+        id: +courseId,
+        user_id: +userId
+      }
+    })
+
+    if (!checkOwnership) {
+      throw new UnauthorizedException('Curso não encontrado')
+    }
+
+    await this.usersService.deleteQualification(+courseId)
 
     return 'ok'
   }

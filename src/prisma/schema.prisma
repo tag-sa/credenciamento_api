@@ -64,6 +64,7 @@ model Users {
   recovery_code_expires DateTime?
   change_password       Boolean?    @default(false)
   score                 Int         @default(0)
+  about                 String?     @db.Text
 
   group_users             GroupsUsers[]
   logs                    Logs[]
@@ -148,27 +149,13 @@ model GroupsPermissions {
   @@map("groups_permissions")
 }
 
-model Images {
-  id                 Int      @id @default(autoincrement())
-  entity             String
-  entity_id          Int
-  original_file_name String
-  src                String
-  cover              Boolean  @default(false)
-  created            DateTime @default(now())
-  modified           DateTime @updatedAt
-
-  events Events @relation(fields: [entity_id], references: [id], onDelete: Cascade)
-
-  @@map("images")
-}
-
 model Files {
   id                 Int      @id @default(autoincrement())
   entity             String
   entity_id          Int
   original_file_name String
-  src                String
+  url                String
+  default            Boolean  @default(false)
   created            DateTime @default(now())
   modified           DateTime @updatedAt
 
@@ -297,7 +284,6 @@ model Events {
 
   place             Places              @relation(fields: [place_id], references: [id], onDelete: Cascade)
   advertiser        Advertisers         @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
-  images            Images[]
   teams             Teams[]
   EventsOccurrences EventsOccurrences[]
 
@@ -357,6 +343,16 @@ model Courses {
   @@map("courses")
 }
 
+model CoursesTypes {
+  id           Int            @id @default(autoincrement())
+  name         String
+  created      DateTime       @default(now())
+  modified     DateTime       @default(now()) @updatedAt
+  UsersCourses UsersCourses[]
+
+  @@map("courses_types")
+}
+
 model FunctionsCourses {
   id          Int @id @default(autoincrement())
   function_id Int
@@ -370,16 +366,36 @@ model FunctionsCourses {
 }
 
 model UsersCourses {
-  int         Int      @id @default(autoincrement())
-  user_id     Int
-  course_id   Int
-  valid_until DateTime
-  certified   Boolean  @default(false)
+  id                    Int       @id @default(autoincrement())
+  name                  String?
+  place                 String?
+  user_id               Int
+  course_id             Int?
+  course_type_id        Int
+  conclusion_date       DateTime  @db.Date
+  valid_until           DateTime? @db.Date
+  certified             Boolean   @default(false)
+  certified_url         String?
+  user_course_status_id Int
+  message               String?
 
-  user   Users   @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  course Courses @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user               Users              @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course             Courses?           @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  course_type        CoursesTypes       @relation(fields: [course_type_id], references: [id], onDelete: Cascade)
+  user_course_status UsersCoursesStatus @relation(fields: [user_course_status_id], references: [id], onDelete: Restrict)
 
   @@map("users_courses")
+}
+
+model UsersCoursesStatus {
+  id         Int      @id @default(autoincrement())
+  name       String
+  icon       String?
+  hasOpacity Boolean? @default(false)
+
+  UsersCourses UsersCourses[]
+
+  @@map("users_courses_status")
 }
 
 model Teams {

@@ -1,7 +1,7 @@
-import { GenderType } from '@prisma/client';
-import { User } from '../entities/user.entity';
-import Joi from 'joi';
-import { Address } from '../entities/address.entity';
+import { GenderType } from '@prisma/client'
+import Joi from 'joi'
+import { Address } from '../entities/address.entity'
+import { User } from '../entities/user.entity'
 
 export class UserDto implements User {
   static createCatSchema = Joi.object({
@@ -14,6 +14,7 @@ export class UserDto implements User {
     birthdate: Joi.date().required(),
     rg: Joi.string(),
     rg_emitted_by: Joi.string(),
+    about: Joi.string().allow('').allow(null),
     address: Joi.object({
       zip: Joi.string().required(),
       address: Joi.string().required(),
@@ -22,30 +23,31 @@ export class UserDto implements User {
       state: Joi.string().required(),
       number: Joi.string().required(),
       complement: Joi.string().allow(''),
-      type: Joi.string().allow(''),
-    }),
-  });
+      type: Joi.string().allow('')
+    })
+  })
 
-  id?: number;
-  name: string;
-  nickname: string;
-  email: string;
-  document: string;
-  rg?: string;
-  rg_emitted_by?: string;
-  password: string;
-  gender?: GenderType;
-  birthdate?: Date;
-  status?: string;
-  root?: boolean;
-  created?: Date;
-  modified?: Date;
-  recovery_code?: string;
-  recovery_code_expires?: Date;
-  change_password?: boolean;
-  last_login?: Date;
-  last_ip?: string;
-  last_access?: Date;
-  type?: string;
-  address?: Address[];
+  id?: number
+  name: string
+  nickname: string
+  email: string
+  document: string
+  rg?: string
+  rg_emitted_by?: string
+  password: string
+  gender?: GenderType
+  birthdate?: Date
+  status?: string
+  root?: boolean
+  created?: Date
+  modified?: Date
+  recovery_code?: string
+  recovery_code_expires?: Date
+  change_password?: boolean
+  last_login?: Date
+  last_ip?: string
+  last_access?: Date
+  type?: string
+  about?: string
+  address?: Address[]
 }

@@ -4,6 +4,12 @@ const prisma = new PrismaClient()
 
 const teamsStatus = [{ id: 1, name: 'Ativo' }]
 
+const teamsUsersStatus = [
+  { id: 1, name: 'Aguardando' },
+  { id: 2, name: 'Confirmado' },
+  { id: 3, name: 'Recusado' }
+]
+
 const functions = [
   { id: 1, name: 'Segurança' },
   { id: 2, name: 'Supervisor' },
@@ -13,6 +19,20 @@ const functions = [
 ]
 
 const notifications = [{ id: 1, name: 'Notificações de vagas' }]
+
+const coursesTypes = [
+  { id: 1, name: 'Curso' },
+  { id: 2, name: 'Treinamento' },
+  { id: 3, name: 'Palestra' },
+  { id: 4, name: 'Workshop' },
+  { id: 5, name: 'Conferência' }
+]
+
+const usersCoursesStatus = [
+  { id: 1, name: 'Em análise', hasOpacity: true, icon: 'IconCourseAwaiting' },
+  { id: 2, name: 'Aprovado', hasOpacity: false, icon: null },
+  { id: 3, name: 'Reprovado', hasOpacity: true, icon: null }
+]
 
 async function main() {
   for (const status of teamsStatus) {
@@ -30,6 +50,24 @@ async function main() {
   for (const notif of notifications) {
     await prisma.notificationsTypes.create({
       data: notif
+    })
+  }
+
+  for (const courseType of coursesTypes) {
+    await prisma.coursesTypes.create({
+      data: courseType
+    })
+  }
+
+  for (const userCourseStatus of usersCoursesStatus) {
+    await prisma.usersCoursesStatus.create({
+      data: userCourseStatus
+    })
+  }
+
+  for (const teamUserStatus of teamsUsersStatus) {
+    await prisma.teamsUsersStatus.create({
+      data: teamUserStatus
     })
   }
 }

@@ -8,7 +8,7 @@ import { CreateEventDto } from './dto/create-event.dto'
 
 @Injectable()
 export class EventsService {
-  constructor(private readonly prismaService: PrismaService) { }
+  constructor(private readonly prismaService: PrismaService) {}
 
   async getEvent(eventId: number) {
     let event = await this.prismaService.events.findFirst({
@@ -27,9 +27,9 @@ export class EventsService {
       }
     })
 
-    event = await this.eventCost(event);
-    console.log(event)
-    return event;
+    event = await this.eventCost(event)
+
+    return event
   }
 
   async getTeam(teamId: number) {
@@ -76,11 +76,9 @@ export class EventsService {
         quantity: body.quantity,
         date_start: moment(body.date_start).toDate(),
         date_end: moment(body.date_end).toDate(),
-        extra_amount: body.extra_amount,
-
-
-      },
-    });
+        extra_amount: body.extra_amount
+      }
+    })
 
     const teamId = saveTeam.id
 
