@@ -1,14 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import moment from 'moment';
-import { EventsService } from 'src/events/events.service';
-import { PrismaService } from 'src/prisma.service';
-import { CreateAdvertiserDto } from './dto/create-advertiser.dto';
+import { Injectable } from '@nestjs/common'
+import moment from 'moment'
+import { EventsService } from 'src/events/events.service'
+import { PrismaService } from 'src/prisma.service'
+import { CreateAdvertiserDto } from './dto/create-advertiser.dto'
 
 @Injectable()
 export class AdvertisersService {
   constructor(
     private readonly prismaService: PrismaService,
-    private readonly eventService: EventsService,
+    private readonly eventService: EventsService
   ) {}
 
   create(createAdvertiserDto: CreateAdvertiserDto, userId: number) {
@@ -19,128 +19,155 @@ export class AdvertisersService {
         about: createAdvertiserDto.about,
         UsersAdvertises: {
           create: {
-            user_id: userId,
-          },
-        },
-      },
-    });
+            user_id: userId
+          }
+        }
+      }
+    })
 
-    return save;
+    return save
   }
 
   async findAll(userId: number) {
-    const advertisers = [];
+    const advertisers = []
 
-    const getUserAdvertisers =
-      await this.prismaService.usersAdvertises.findMany({
-        where: {
-          user_id: userId,
-        },
-        select: {
-          advertiser_id: true,
-        },
-      });
+    const getUserAdvertisers = await this.prismaService.usersAdvertises.findMany({
+      where: {
+        user_id: userId
+      },
+      select: {
+        advertiser_id: true
+      }
+    })
 
     for (const advertiser of getUserAdvertisers) {
       const getAdvertiser = await this.prismaService.advertisers.findFirst({
         where: {
-          id: advertiser.advertiser_id,
-        },
-      });
+          id: advertiser.advertiser_id
+        }
+      })
 
-      advertisers.push(getAdvertiser);
+      advertisers.push(getAdvertiser)
     }
 
-    return advertisers;
+    return advertisers
   }
 
   async findOne(id: number) {
     const advertiser: any = await this.prismaService.advertisers.findFirst({
       where: {
-        id: id,
-      },
-    });
+        id: id
+      }
+    })
 
     const pastEvents = await this.prismaService.events.findMany({
       where: {
         advertiser_id: advertiser.id,
         date_end: {
-          lt: moment().toDate(),
-        },
+          lt: moment().toDate()
+        }
       },
       include: {
         teams: {
           include: {
             teamsUsers: {
               include: {
-                function: true,
-              },
-            },
-          },
-        },
-      },
-    });
+                function: true
+              }
+            }
+          }
+        }
+      }
+    })
 
     const events = await this.prismaService.events.findMany({
       where: {
         advertiser_id: advertiser.id,
         date_end: {
-          gt: moment().toDate(),
-        },
+          gt: moment().toDate()
+        }
       },
       include: {
         teams: {
           include: {
             teamsUsers: {
               include: {
-                function: true,
-              },
-            },
-          },
-        },
-      },
-    });
+                function: true
+              }
+            }
+          }
+        }
+      }
+    })
 
     if (events.length) {
       events.map((event: any) => {
-        event = this.eventService.eventCost(event);
+        event = this.eventService.eventCost(event)
 
-        return event;
-      });
+        return event
+      })
     }
 
     if (pastEvents.length) {
       for (let event of pastEvents) {
-        event = await this.eventService.eventCost(event);
+        event = await this.eventService.eventCost(event)
       }
     }
 
-    advertiser.events = events;
-    advertiser.pastEvents = pastEvents;
+    advertiser.events = events
+    advertiser.pastEvents = pastEvents
 
-    return advertiser;
+    return advertiser
   }
 
   update(id: number, updateAdvertiserDto: CreateAdvertiserDto) {
     const update = this.prismaService.advertisers.update({
       where: {
-        id: id,
+        id: id
       },
       data: {
         name: updateAdvertiserDto.name,
         url: updateAdvertiserDto.url,
-        about: updateAdvertiserDto.about,
-      },
-    });
+        about: updateAdvertiserDto.about
+      }
+    })
 
-    return update;
+    return update
   }
 
   remove(id: number) {
     return this.prismaService.advertisers.delete({
       where: {
-        id: id,
+        id: id
+      }
+    })
+  }
+
+  async getPeople(id: number) {
+    const usersAdvertisers = await this.prismaService.usersAdvertises.findMany({
+      where: {
+        advertiser_id: id
       },
-    });
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
+
+    const invites = await this.prismaService.usersAdvertisesInvites.findMany({
+      where: {
+        advertiser_id: id
+      }
+    })
+
+    return {
+      users: usersAdvertisers,
+      invites: invites
+    }
   }
 }

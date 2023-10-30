@@ -229,9 +229,10 @@ model Advertisers {
   url   String?
   about String? @db.Text
 
-  places          Places[]
-  UsersAdvertises UsersAdvertises[]
-  Events          Events[]
+  places                 Places[]
+  UsersAdvertises        UsersAdvertises[]
+  Events                 Events[]
+  UsersAdvertisesInvites UsersAdvertisesInvites[]
 
   @@map("advertisers")
 }
@@ -247,6 +248,20 @@ model UsersAdvertises {
   advertiser Advertisers @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
 
   @@map("users_advertises")
+}
+
+model UsersAdvertisesInvites {
+  id            Int        @id @default(autoincrement())
+  advertiser_id Int
+  email         String
+  expires       DateTime
+  status        StatusType @default(a)
+  created       DateTime   @default(now())
+  modified      DateTime   @default(now()) @updatedAt
+
+  advertiser Advertisers @relation(fields: [advertiser_id], references: [id], onDelete: Cascade)
+
+  @@map("users_advertises_invites")
 }
 
 model Places {
