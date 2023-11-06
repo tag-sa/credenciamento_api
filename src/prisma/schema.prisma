@@ -21,6 +21,7 @@ enum GenderType {
   m
   f
   o
+  n
 }
 
 enum TeamsUsersStatusType {
@@ -153,7 +154,7 @@ model Files {
   id                 Int      @id @default(autoincrement())
   entity             String
   entity_id          Int
-  original_file_name String
+  original_file_name String?
   url                String
   default            Boolean  @default(false)
   created            DateTime @default(now())

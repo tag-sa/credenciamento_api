@@ -67,6 +67,8 @@ export class UsersController {
 
     delete user.password
 
+    user['avatar'] = await this.usersService.getUserAvatar(user.id)
+
     const payload = { sub: user.id, user }
     const token = await this.jwtService.signAsync(payload)
 

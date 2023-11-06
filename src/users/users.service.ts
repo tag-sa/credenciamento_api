@@ -91,6 +91,23 @@ export class UsersService {
       toUpdate['password'] = passwordHash
     }
 
+    if (updateUserDto.avatar) {
+      await this.prismaService.files.deleteMany({
+        where: {
+          entity: 'user_avatar',
+          entity_id: id
+        }
+      })
+
+      await this.prismaService.files.create({
+        data: {
+          entity: 'user_avatar',
+          entity_id: id,
+          url: updateUserDto.avatar
+        }
+      })
+    }
+
     return await this.prismaService.users.update({
       where: {
         id
@@ -151,7 +168,17 @@ export class UsersService {
 
     user['courses'] = courses
 
-    console.log(JSON.stringify(user))
+    const avatar = await this.prismaService.files.findFirst({
+      where: {
+        entity_id: user.id,
+        entity: 'user_avatar'
+      },
+      select: {
+        url: true
+      }
+    })
+
+    user['avatar'] = avatar ? avatar.url : null
 
     user.type = user.type === 'pf' ? (user['document'] = user.cpf) : (user['document'] = user.cnpj)
 
@@ -385,5 +412,16 @@ export class UsersService {
         id: courseId
       }
     })
+  }
+
+  async getUserAvatar(userId: number): Promise<string> {
+    const avatar = await this.prismaService.files.findFirst({
+      where: {
+        entity: 'user_avatar',
+        entity_id: userId
+      }
+    })
+
+    return avatar ? avatar.url : null
   }
 }

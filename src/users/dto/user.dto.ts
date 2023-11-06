@@ -50,4 +50,5 @@ export class UserDto implements User {
   type?: string
   about?: string
   address?: Address[]
+  avatar?: string
 }

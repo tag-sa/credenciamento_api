@@ -21,15 +21,170 @@ export class EventsService {
         teams: {
           include: {
             teamStatus: true,
-            teamsUsers: { include: { user: true, function: true } }
+            teamsUsers: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    score: true
+                  }
+                },
+                function: true
+              }
+            }
           }
         }
       }
     })
 
+    if (event.teams.length) {
+      await Promise.all(
+        event.teams.map(async (team) => {
+          await Promise.all(
+            team.teamsUsers.map(async (tu) => {
+              if (!tu.user_id) return
+
+              const avatar = await this.prismaService.files.findFirst({
+                where: {
+                  entity_id: tu.user.id,
+                  entity: 'user_avatar'
+                },
+                select: {
+                  url: true
+                }
+              })
+
+              tu.user['avatar'] = avatar ? avatar.url : null
+
+              return tu
+            })
+          )
+          return team
+        })
+      )
+    }
+
     event = await this.eventCost(event)
 
     return event
+  }
+
+  async duplicateEvent(eventId: number) {
+    const event = await this.prismaService.events.findFirst({
+      where: {
+        id: eventId
+      }
+    })
+    const oldEventId = event.id
+    delete event.id
+
+    const teams = await this.prismaService.teams.findMany({
+      where: {
+        event_id: eventId
+      },
+      include: {
+        teamsUsers: true
+      }
+    })
+
+    const newEvent = await this.prismaService.events.create({
+      data: {
+        ...event,
+        name: `${event.name} - duplicado`
+      }
+    })
+
+    const newTeams = []
+
+    teams.map((team) => {
+      delete team.id
+      delete team.event_id
+      delete team.created
+      delete team.modified
+
+      team.event_id = newEvent.id
+
+      team.name = `${team.name} - duplicado`
+
+      newTeams.push(team)
+
+      team.teamsUsers.map((tu) => {
+        delete tu.id
+        delete tu.teams_id
+
+        tu.teams_users_status_id = 1
+        tu.confirmed = 'a'
+        tu.justification = null
+        tu.identification = null
+        tu.minutes_worked = null
+        tu.worked_amount = null
+        tu.total_amount = null
+      })
+    })
+
+    newTeams.map(async (team) => {
+      await this.prismaService.teams.create({
+        data: {
+          ...team,
+          teamsUsers: {
+            create: team.teamsUsers
+          }
+        }
+      })
+    })
+
+    return await this.getEvent(newEvent.id)
+  }
+
+  async duplicateTeam(teamId: number) {
+    const team = await this.prismaService.teams.findFirst({
+      where: {
+        id: teamId
+      },
+      include: {
+        teamsUsers: true
+      }
+    })
+
+    const teamsUsers = team.teamsUsers.map((tu) => {
+      delete tu.id
+      delete tu.teams_id
+
+      tu.teams_users_status_id = 1
+      tu.confirmed = 'a'
+      tu.justification = null
+      tu.identification = null
+      tu.minutes_worked = null
+      tu.worked_amount = null
+      tu.total_amount = null
+
+      return tu
+    })
+
+    delete team.teamsUsers
+    delete team.id
+
+    const save = await this.prismaService.teams.create({
+      data: {
+        ...team,
+        name: `${team.name} - duplicado`,
+        teamsUsers: {
+          create: teamsUsers
+        }
+      }
+    })
+
+    return save
+  }
+
+  async deleteTeam(teamId: number) {
+    return await this.prismaService.teams.delete({
+      where: {
+        id: teamId
+      }
+    })
   }
 
   async getTeam(teamId: number) {
@@ -42,6 +197,27 @@ export class EventsService {
         teamsUsers: { include: { user: true, function: true } }
       }
     })
+
+    if (geatTeam.teamsUsers.length) {
+      await Promise.all(
+        geatTeam.teamsUsers?.map(async (teamUser) => {
+          if (!teamUser.user_id) return
+
+          const avatar = await this.prismaService.files.findFirst({
+            where: {
+              entity_id: teamUser.user.id,
+              entity: 'user_avatar'
+            },
+            select: {
+              url: true
+            }
+          })
+
+          teamUser.user['avatar'] = avatar ? avatar.url : null
+          delete teamUser.user.password
+        })
+      )
+    }
 
     const [team] = this.teamCost([geatTeam])
 
@@ -222,7 +398,23 @@ export class EventsService {
     })
 
     if (availableUsers.length) {
-      availableUsers.map((user) => delete user.password)
+      await Promise.all(
+        availableUsers.map(async (user) => {
+          const avatar = await this.prismaService.files.findFirst({
+            where: {
+              entity_id: user.id,
+              entity: 'user_avatar'
+            },
+            select: {
+              url: true
+            }
+          })
+
+          user['avatar'] = avatar ? avatar.url : null
+
+          delete user.password
+        })
+      )
     }
 
     return availableUsers
@@ -260,6 +452,14 @@ export class EventsService {
       data: {
         confirmed: 'a',
         user_id: null
+      }
+    })
+  }
+
+  async deleteEvent(eventId: number) {
+    return await this.prismaService.events.delete({
+      where: {
+        id: eventId
       }
     })
   }
