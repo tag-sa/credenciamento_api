@@ -16,7 +16,7 @@ services:
     depends_on:
       - mysqldb
       - redis
-  
+
   # postgres:
   #   image: postgres
   #   restart: always
@@ -31,6 +31,7 @@ services:
 
   mysqldb:
     image: mysql:8
+    command: --sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
     restart: unless-stopped
     environment:
       - MYSQL_ROOT_PASSWORD=$MYSQLDB_ROOT_PASSWORD
@@ -44,7 +45,7 @@ services:
     image: redis
     ports:
       - 6379:6379
-    volumes: 
+    volumes:
       - redis:/data
 
 volumes:
