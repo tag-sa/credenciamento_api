@@ -10,7 +10,7 @@ jobs:
   EC2-Deploy:
     runs-on: ubuntu-latest
     environment:
-      name: ${{ github.ref_name }}
+      name: Teste
       url: ${{ steps.deploy.outputs.vm_url }}
     steps:
       - id: deploy
