@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.x]
+        node-version: [16.x]
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
@@ -34,7 +34,7 @@ jobs:
       # install applicaion dependencies
       - name: Install dependencies
         run: |
-          npm install
+          npm i
           npm ci
       # build and test the apps
       - name: build
