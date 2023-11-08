@@ -8,8 +8,7 @@ export class QualificationsController {
   @Get('types')
   async findAll() {
     return {
-      data: await this.qualificationsService.findAll(),
-      tested: true
+      data: await this.qualificationsService.findAll()
     }
   }
 }
