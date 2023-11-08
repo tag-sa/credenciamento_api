@@ -1,59 +1,30 @@
-name: Deploy to Amazon ECS
+name: Advanced deploy
 on:
   push:
-    branches:
-      - master
-env:
-  AWS_REGION: sa-east-1 # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: credenciamento-api # set this to your Amazon ECR repository name
-  ECS_SERVICE: CredenciamentoApiService # set this to your Amazon ECS service name
-  ECS_CLUSTER: CredenciamentoCluster # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION:
-    task-definition.json
-    # file, e.g. .aws/task-definition.json
-  CONTAINER_NAME:
-    CredenciamentoApiContainer # set this to the name of the container in the
-    # containerDefinitions section of your task definition
+    branches: [master]
+
+permissions:
+  contents: read
+
 jobs:
-  deploy:
-    name: Deploy
+  EC2-Deploy:
     runs-on: ubuntu-latest
-    environment: production
+    environment:
+      name: ${{ github.ref_name }}
+      url: ${{ steps.deploy.outputs.vm_url }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - id: deploy
+        name: Deploy
+        uses: bitovi/github-actions-deploy-docker-to-ec2@v0.5.8
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-      - name: Build, tag, and push image to Amazon ECR
-        id: build-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          # Build a docker container and
-          # push it to ECR so that it can
-          # be deployed to ECS.
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-      - name: Fill in the new image ID in the Amazon ECS task definition
-        id: task-def
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: ${{ env.ECS_TASK_DEFINITION }}
-          container-name: ${{ env.CONTAINER_NAME }}
-          image: ${{ steps.build-image.outputs.image }}
-      - name: Deploy Amazon ECS task definition
-        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
-        with:
-          task-definition: ${{ steps.task-def.outputs.task-definition }}
-          service: ${{ env.ECS_SERVICE }}
-          cluster: ${{ env.ECS_CLUSTER }}
-          wait-for-service-stability: true
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws_session_token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws_default_region: us-east-1
+          domain_name: bitovi.com
+          sub_domain: app
+          tf_state_bucket: my-terraform-state-bucket
+          dot_env: ${{ secrets.DOT_ENV }}
+          ghv_env: ${{ vars.VARS }}
+          app_port: 3000
+          additional_tags: '{"key1": "value1","key2": "value2"}'
