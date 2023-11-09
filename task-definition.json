@@ -2,7 +2,7 @@
   "containerDefinitions": [
       {
           "name": "CredenciamentoApiContainer",
-          "image": "669674310761.dkr.ecr.sa-east-1.amazonaws.com/credenciamento-api:d56f24afd40dc6005a2b0e7c3aa43446a3134fff",
+          "image": "669674310761.dkr.ecr.sa-east-1.amazonaws.com/credenciamento-api",
           "cpu": 0,
           "portMappings": [
               {
