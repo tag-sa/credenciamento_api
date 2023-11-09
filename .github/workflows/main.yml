@@ -13,3 +13,9 @@ jobs:
           node-version: 16
           cache: "npm"
       - run: npm ci
+      - name: Login Docker Hub
+        run: docker login -u ${{secrets.DOCKER_USERNAME}} -p ${{secrets.DOCKER_PASSWORD}}
+      - name: Build docker image
+        run: docker build -t marcoscamargo7/credenciamento_api .
+      - name: Push image docker
+        run: docker push marcoscamargo7/credenciamento_api
