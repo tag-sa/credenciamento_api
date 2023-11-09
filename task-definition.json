@@ -1,5 +1,4 @@
 {
-  "taskDefinitionArn": "arn:aws:ecs:sa-east-1:669674310761:task-definition/DeployCredenciamentoApi:15",
   "containerDefinitions": [
       {
           "name": "CredenciamentoApiContainer",
@@ -20,24 +19,12 @@
       }
   ],
   "family": "DeployCredenciamentoApi",
-  "revision": 15,
   "volumes": [],
-  "status": "ACTIVE",
-  "requiresAttributes": [
-      {
-          "name": "com.amazonaws.ecs.capability.ecr-auth"
-      }
-  ],
   "placementConstraints": [],
-  "compatibilities": [
-      "EC2"
-  ],
   "requiresCompatibilities": [
       "EC2"
   ],
   "cpu": "1024",
   "memory": "150",
-  "registeredAt": "2023-11-08T18:11:07.520Z",
-  "registeredBy": "arn:aws:iam::669674310761:root",
   "tags": []
 }
