@@ -9,7 +9,7 @@ env:
   ECS_SERVICE: CredenciamentoApiService # set this to your Amazon ECS service name
   ECS_CLUSTER: CredenciamentoCluster # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION:
-    task-definition # set this to the path to your Amazon ECS task definition
+    task-definition.json # set this to the path to your Amazon ECS task definition
     # file, e.g. .aws/task-definition.json
   CONTAINER_NAME:
     CredenciamentoApiContainer # set this to the name of the container in the
