@@ -9,6 +9,6 @@ export class QualificationsController {
   async findAll() {
     return {
       data: await this.qualificationsService.findAll(),
-    teste: 12   }
+    teste: 124   }
   }
 }
