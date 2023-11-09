@@ -19,3 +19,12 @@ jobs:
         run: docker build -t marcoscamargo7/credenciamento_api .
       - name: Push image docker
         run: docker push marcoscamargo7/credenciamento_api
+
+  deploy:
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Pull image from docker hub
+        run: docker pull marcoscamargo7/credenciamento_api:latest
+      - name: Run docker container
+        run: docker run -d -p 8080:8080 --name deploy_credenciamento_api marcoscamargo7/credenciamento_api
