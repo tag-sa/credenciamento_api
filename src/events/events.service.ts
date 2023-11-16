@@ -268,7 +268,9 @@ export class EventsService {
         date_end: moment(body.date_end).toDate(),
         confirmed: 'a',
         user_id: null,
-        teams_users_status_id: 1
+        teams_users_status_id: 1,
+        tax_type: body.tax_type,
+        tax: body.tax
       }
 
       teamsUsersToCreate.push(newTeamUser)
@@ -297,7 +299,7 @@ export class EventsService {
     return team
   }
 
-  async eventCost(event: any) {
+  eventCost(event: any) {
     if (!event.teams) {
       event.total_preview = 0
       event.total_executed = 0
@@ -337,12 +339,12 @@ export class EventsService {
 
         tu.minutes_worked = workedMinutes
 
-        if (tu.function.tax_type == 'period') {
-          teamMemberCostPreview = tu.function.tax + tu.extra_amount
+        if (tu.tax_type == 'period') {
+          teamMemberCostPreview = tu.tax + tu.extra_amount
         }
 
-        if (tu.function.tax_type == 'hour') {
-          const taxByMinute = tu.function.tax / 60
+        if (tu.tax_type == 'hour') {
+          const taxByMinute = tu.tax / 60
 
           teamMemberCostPreview = workedMinutes * taxByMinute + tu.extra_amount
         }

@@ -1,16 +1,19 @@
-import Joi from 'joi';
+import { TaxTypes } from '@prisma/client'
+import Joi from 'joi'
 export class CreateEventTeamDto {
-  event_id: number;
-  sector_id?: number;
-  team_status_id: number;
-  name: string;
-  status: string;
-  quantity: number;
-  date_start: Date;
-  date_end: Date;
-  created?: Date;
-  modified?: Date;
-  extra_amount?: number;
+  event_id: number
+  sector_id?: number
+  team_status_id: number
+  name: string
+  status: string
+  quantity: number
+  date_start: Date
+  date_end: Date
+  created?: Date
+  modified?: Date
+  extra_amount?: number
+  tax_type: string
+  tax: number
 
   static createSchema = Joi.object({
     sector_id: Joi.number().optional().allow(null),
@@ -22,5 +25,9 @@ export class CreateEventTeamDto {
     date_start: Joi.date().required(),
     date_end: Joi.date().required(),
     extra_amount: Joi.number().optional().allow(null),
-  });
+    tax_type: Joi.string()
+      .valid(...Object.values(TaxTypes))
+      .required(),
+    tax: Joi.number().required().greater(0)
+  })
 }

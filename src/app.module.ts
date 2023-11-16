@@ -10,6 +10,7 @@ import { OccurrencesModule } from './occurrences/occurrences.module'
 import { QualificationsModule } from './qualifications/qualifications.module'
 import { UsersModule } from './users/users.module'
 import { ZipModule } from './zip/zip.module'
+import { PanelModule } from './panel/panel.module';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { ZipModule } from './zip/zip.module'
     OccurrencesModule,
     NotificationsModule,
     FilesModule,
-    QualificationsModule
+    QualificationsModule,
+    PanelModule
   ],
   controllers: []
 })
