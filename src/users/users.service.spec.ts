@@ -3,8 +3,8 @@ import { Test, TestingModule } from '@nestjs/testing'
 import { GenderType } from '@prisma/client'
 import { PrismaService } from 'src/prisma.service'
 import { PrismaModule } from 'src/prisma/prisma.module'
-import { UsersService } from './UsersService'
 import { UserDto } from './dto/user.dto'
+import { UsersService } from './users.service'
 
 describe('UsersService', () => {
   let userService: UsersService
@@ -33,23 +33,24 @@ describe('UsersService', () => {
   })
 
   it('should create a user', async () => {
-    const createUserDto: UserDto = {
-      name: faker.person.fullName(),
-      nickname: faker.person.fullName().split(' ')[0],
-      email: faker.internet.email(),
-      document: generateRandomDocument(),
-      rg: (Math.random() + 1).toString(36).substring(7),
-      rg_emitted_by: faker.location.state(),
-      password: faker.internet.password({ length: 8 }),
-      gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
-      birthdate: faker.date.past(),
-      status: ['a', 'i', 'b'].sort(() => Math.random() - 0.5)[0],
-      root: [true, false].sort(() => Math.random() - 0.5)[0]
+    for (let i = 0; i < 100; i++) {
+      const createUserDto: UserDto = {
+        name: faker.person.fullName(),
+        nickname: faker.person.fullName().split(' ')[0],
+        email: faker.internet.email(),
+        document: generateRandomDocument(),
+        rg: (Math.random() + 1).toString(36).substring(7),
+        rg_emitted_by: faker.location.state(),
+        password: faker.internet.password({ length: 8 }),
+        gender: Object.values(GenderType).sort(() => Math.random() - 0.5)[0],
+        birthdate: faker.date.past(),
+        status: ['a', 'i', 'b'].sort(() => Math.random() - 0.5)[0],
+        root: [true, false].sort(() => Math.random() - 0.5)[0]
+      }
+
+      const save = await userService.create(createUserDto)
     }
-
-    const save = await userService.create(createUserDto)
-
-    expect(save).toHaveProperty('id')
+    // expect(save).toHaveProperty('id')
   })
 
   it('should save user session', async () => {

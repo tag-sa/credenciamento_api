@@ -16,6 +16,6 @@ export class PanelController {
   @UseGuards(AuthGuard)
   @Get('worker')
   async getWorkerPanelData(@Req() req: Request & { user: User }) {
-    return await this.panelService.getPanelData(req.user.id)
+    return await this.panelService.getWorkerPanelData(req.user.id)
   }
 }

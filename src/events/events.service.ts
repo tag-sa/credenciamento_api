@@ -261,6 +261,7 @@ export class EventsService {
     const teamsUsersToCreate = []
 
     Array.from({ length: body.quantity }).map(() => {
+      //TODO: CALC USER COST FOR SAVING IN INSERT
       const newTeamUser: CreateEventTeamUserDto = {
         teams_id: teamId,
         function_id: body.functions_id,
