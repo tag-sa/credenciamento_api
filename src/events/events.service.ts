@@ -77,7 +77,7 @@ export class EventsService {
         id: eventId
       }
     })
-    const oldEventId = event.id
+
     delete event.id
 
     const teams = await this.prismaService.teams.findMany({
@@ -322,6 +322,47 @@ export class EventsService {
     return event
   }
 
+  teamUserCost(teamUser: any) {
+    let teamMemberCostPreview = 0
+    let teamMemberCostPreviewByAnswer = 0
+    let teamMemberCostExecuted = 0
+
+    const starWork = moment(teamUser.date_start)
+    const endWork = moment(teamUser.date_end)
+
+    const workedMinutes = endWork.diff(starWork, 'minutes')
+
+    teamUser.minutes_worked = workedMinutes
+
+    if (teamUser.tax_type == 'period') {
+      teamMemberCostPreview = teamUser.tax
+    }
+
+    if (teamUser.tax_type == 'hour') {
+      const taxByMinute = teamUser.tax / 60
+
+      teamMemberCostPreview = workedMinutes * taxByMinute
+    }
+
+    if (teamUser.confirmed == 'c' && teamUser.user_id != null) {
+      teamMemberCostPreviewByAnswer = teamMemberCostPreview
+
+      if (teamUser.teams_users_status_id == 2) {
+        teamMemberCostExecuted = teamMemberCostPreview
+      }
+    }
+
+    teamUser.worked_amount = teamMemberCostPreview
+    teamUser.total_amount = teamMemberCostPreview + teamUser.extra_amount
+
+    return {
+      teamUser,
+      teamMemberCostPreview,
+      teamMemberCostPreviewByAnswer,
+      teamMemberCostExecuted
+    }
+  }
+
   teamCost(teams: any[]) {
     teams.map((team: any) => {
       team.total_preview = 0
@@ -329,41 +370,11 @@ export class EventsService {
       team.total_executed = 0
 
       team.teamsUsers.map((tu) => {
-        let teamMemberCostPreview = 0
-        let teamMemberCostPreviewByAnswer = 0
-        let teamMemberCostExecuted = 0
+        tu = this.teamUserCost(tu)
 
-        const starWork = moment(tu.date_start)
-        const endWork = moment(tu.date_end)
-
-        const workedMinutes = endWork.diff(starWork, 'minutes')
-
-        tu.minutes_worked = workedMinutes
-
-        if (tu.tax_type == 'period') {
-          teamMemberCostPreview = tu.tax + tu.extra_amount
-        }
-
-        if (tu.tax_type == 'hour') {
-          const taxByMinute = tu.tax / 60
-
-          teamMemberCostPreview = workedMinutes * taxByMinute + tu.extra_amount
-        }
-
-        if (tu.confirmed == 'c' && tu.user_id != null) {
-          teamMemberCostPreviewByAnswer = teamMemberCostPreview
-
-          if (tu.teams_users_status_id == 2) {
-            teamMemberCostExecuted = teamMemberCostPreview
-          }
-        }
-
-        tu.worked_amount = teamMemberCostPreview
-        tu.total_amount = teamMemberCostPreview
-
-        team.total_preview += teamMemberCostPreview
-        team.total_by_answers += teamMemberCostPreviewByAnswer
-        team.total_executed += teamMemberCostExecuted
+        team.total_preview += tu.teamMemberCostPreview
+        team.total_by_answers += tu.teamMemberCostPreviewByAnswer
+        team.total_executed += tu.teamMemberCostExecuted
 
         return tu
       })

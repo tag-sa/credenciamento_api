@@ -195,8 +195,6 @@ describe('EventsController', () => {
       .set('Authorization', `Bearer ${bearerToken}`)
       .set('Content-Type', 'application/json')
 
-    console.log(data, 11111111)
-
     teamId = data.body.data.id
 
     expect(data.status).toBe(HttpStatus.CREATED)

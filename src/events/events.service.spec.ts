@@ -153,8 +153,6 @@ describe('EventsService', () => {
     //     take: 1
     //   })
 
-    //   console.log(randomRecord)
-
     //   return randomRecord[0].id
     // }
 

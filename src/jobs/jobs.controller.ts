@@ -21,4 +21,13 @@ export class JobsController {
 
     return { data: await this.jobsService.findAll(userId) }
   }
+
+  @UseGuards(AuthGuard)
+  @Get(':id/details')
+  async getJobDetails(@Param('id') jobId: string, @Req() req: Request & { user: { id: number } }) {
+    const userId = req.user.id
+    const job = await this.jobsService.jobDetails(+jobId, userId)
+
+    return { data: job }
+  }
 }

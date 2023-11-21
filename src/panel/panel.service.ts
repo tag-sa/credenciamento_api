@@ -122,8 +122,6 @@ export class PanelService {
     `
     const getPastSixMonths = await this.prismaService.$queryRaw(Prisma.raw(getPastSixMonthsSql))
 
-    console.log(getPastSixMonths)
-
     const nextSixMonthsPreviewSql = `
       WITH RECURSIVE DateSeries (date) AS (
           SELECT CURDATE() + INTERVAL 1 MONTH
